@@ -127,7 +127,16 @@ for task in data["tasks"]:
         hk_entries = [e for e in entries if e["t"] == 15]
 
         if is_numeric and hk_entries:
-            day_total = sum(e.get("p", 0) for e in hk_entries)
+            # Deduplicate: Streaks writes duplicate t=15 entries with identical p values.
+            # Only count each unique p value once per day to avoid inflating totals.
+            seen_p = set()
+            deduped_values = []
+            for e in hk_entries:
+                p = e.get("p", 0)
+                if p not in seen_p:
+                    seen_p.add(p)
+                    deduped_values.append(p)
+            day_total = sum(deduped_values)
             values_list.append(round(day_total, 1) if day_total else None)
 
             if has_manual_done:
