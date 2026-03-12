@@ -231,28 +231,30 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   const todayDay = todayDate.getDay();
   const monOffset = todayDay === 0 ? 6 : todayDay - 1;
   const thisWeekStart = Math.max(0, todayIdx - monOffset);
-  let twD = 0, twL = 0;
+  let twD = 0;
+  const twDays = todayIdx - thisWeekStart + 1;
+  const twTotal = twDays * habits.length;
   for (let i = thisWeekStart; i <= todayIdx; i++) {
     habits.forEach(h => {
-      if (h.completions[i] === 1) { twD++; twL++; }
-      else if (h.completions[i] === 0) { twL++; }
+      if (h.completions[i] === 1) { twD++; }
     });
   }
-  const thisWeekPct = twL > 0 ? Math.round(twD / twL * 100) : 0;
+  const thisWeekPct = twTotal > 0 ? Math.round(twD / twTotal * 100) : 0;
 
   // Last week (previous Mon-Sun)
   const lastWeekEnd = thisWeekStart - 1;
   const lastWeekStart = Math.max(0, lastWeekEnd - 6);
-  let lwD = 0, lwL = 0;
+  let lwD = 0;
+  const lwDays = lastWeekEnd >= 0 ? lastWeekEnd - lastWeekStart + 1 : 0;
+  const lwTotal = lwDays * habits.length;
   if (lastWeekEnd >= 0) {
     for (let i = lastWeekStart; i <= lastWeekEnd; i++) {
       habits.forEach(h => {
-        if (h.completions[i] === 1) { lwD++; lwL++; }
-        else if (h.completions[i] === 0) { lwL++; }
+        if (h.completions[i] === 1) { lwD++; }
       });
     }
   }
-  const lastWeekPct = lwL > 0 ? Math.round(lwD / lwL * 100) : 0;
+  const lastWeekPct = lwTotal > 0 ? Math.round(lwD / lwTotal * 100) : 0;
   const trendDelta = thisWeekPct - lastWeekPct;
   const trendStr = (trendDelta >= 0 ? '+' : '') + trendDelta + '%';
   const trendColor = trendDelta > 0 ? 'var(--green)' : trendDelta < 0 ? 'var(--red)' : 'var(--yellow)';
@@ -503,14 +505,14 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
       row.appendChild(nth);
 
       // Week % (last 7 days completion rate), placed far left after name
-      let wkD = 0, wkL = 0;
+      let wkD = 0;
+      const wkTotal = Math.min(7, dates.length);
       for (let i = Math.max(0, dates.length - 7); i < dates.length; i++) {
-        if (h.completions[i] === 1) { wkD++; wkL++; }
-        else if (h.completions[i] === 0) { wkL++; }
+        if (h.completions[i] === 1) { wkD++; }
       }
       const wpTd = document.createElement('td');
       wpTd.className = 'stat-left';
-      const wkPct = wkL > 0 ? Math.round(wkD / wkL * 100) : -1;
+      const wkPct = wkTotal > 0 ? Math.round(wkD / wkTotal * 100) : -1;
       wpTd.textContent = wkPct >= 0 ? wkPct + '%' : '';
       wpTd.style.color = wkPct >= 70 ? 'var(--green)' : wkPct >= 40 ? 'var(--yellow)' : wkPct >= 0 ? 'var(--red)' : 'var(--text-muted)';
       row.appendChild(wpTd);
@@ -524,18 +526,18 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
           td.className = 'c';
           if (wi > 0) td.classList.add('week-sep');
 
-          let wDone = 0, wLogged = 0;
+          let wDone = 0;
+          const wTotal = wg.indices.length;
           wg.indices.forEach(di => {
-            if (h.completions[di] === 1) { wDone++; wLogged++; }
-            else if (h.completions[di] === 0) { wLogged++; }
+            if (h.completions[di] === 1) { wDone++; }
           });
 
           const inner = document.createElement('div');
           inner.className = 'sq';
-          if (wLogged === 0) {
+          if (wTotal === 0) {
             inner.classList.add('nd');
           } else {
-            const rate = wDone / wLogged;
+            const rate = wDone / wTotal;
             inner.classList.add(rate >= 0.7 ? 'done' : rate >= 0.4 ? 'close' : 'miss');
           }
           // Tooltip for weekly avg
@@ -543,13 +545,13 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
             tt.querySelector('.th').textContent = h.name;
             tt.querySelector('.td').textContent = wg.label + ' week';
             const vE = tt.querySelector('.tv'), sE = tt.querySelector('.ts');
-            if (wLogged > 0) {
-              vE.textContent = wDone + '/' + wLogged + ' days';
-              vE.style.color = wDone/wLogged >= 0.7 ? 'var(--green)' : wDone/wLogged >= 0.4 ? 'var(--yellow)' : 'var(--red)';
+            if (wTotal > 0) {
+              vE.textContent = wDone + '/' + wTotal + ' days';
+              vE.style.color = wDone/wTotal >= 0.7 ? 'var(--green)' : wDone/wTotal >= 0.4 ? 'var(--yellow)' : 'var(--red)';
               vE.style.display = 'block';
             } else { vE.style.display = 'none'; }
-            sE.textContent = wLogged > 0 ? Math.round(wDone/wLogged*100) + '% that week' : 'No data';
-            sE.style.color = wLogged > 0 ? (wDone/wLogged >= 0.7 ? 'var(--green)' : 'var(--yellow)') : 'var(--text-muted)';
+            sE.textContent = wTotal > 0 ? Math.round(wDone/wTotal*100) + '% that week' : 'No data';
+            sE.style.color = wTotal > 0 ? (wDone/wTotal >= 0.7 ? 'var(--green)' : 'var(--yellow)') : 'var(--text-muted)';
             const r = e.target.getBoundingClientRect();
             let left = r.left + r.width/2, top = r.top - 85;
             if (top < 10) top = r.bottom + 8;
