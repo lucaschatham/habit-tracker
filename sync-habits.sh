@@ -1,14 +1,15 @@
 #!/bin/bash
 # Sync Streaks data to habit tracker dashboard
 # Runs daily at 11:59 PM via launchd
+# Extracts data -> updates mockup -> commits -> pushes to GitHub -> Vercel auto-deploys
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-EXTRACT_SCRIPT="/tmp/extract_streaks.py"
+EXTRACT_SCRIPT="$SCRIPT_DIR/extract_streaks.py"
 BACKUP_DIR="$HOME/Library/Mobile Documents/iCloud~com~streaksapp~streak/Documents"
 OUTPUT="$SCRIPT_DIR/streaks-data.json"
-MOCKUP="$SCRIPT_DIR/mockup.html"
+MOCKUP="$SCRIPT_DIR/index.html"
 LOG="$SCRIPT_DIR/sync.log"
 
 echo "$(date): Starting habit sync..." >> "$LOG"
@@ -76,5 +77,16 @@ with open('$MOCKUP', 'w') as f:
 
 print(f'Updated mockup: {len(data[\"habits\"])} habits, {len(data[\"dates\"])} days')
 " >> "$LOG" 2>&1
+
+# Git commit and push
+cd "$SCRIPT_DIR"
+if git diff --quiet index.html streaks-data.json 2>/dev/null; then
+  echo "$(date): No data changes, skipping commit" >> "$LOG"
+else
+  git add index.html streaks-data.json
+  git commit -m "Daily sync: $(date +%Y-%m-%d) habit data update"
+  git push origin master >> "$LOG" 2>&1
+  echo "$(date): Pushed to GitHub" >> "$LOG"
+fi
 
 echo "$(date): Sync complete" >> "$LOG"
