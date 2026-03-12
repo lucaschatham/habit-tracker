@@ -91,6 +91,10 @@ for task in data["tasks"]:
             target = None
             is_numeric = False
 
+    # typ/typd: Streaks app's own HealthKit total for one day (authoritative)
+    hk_today_val = task.get("typ", 0)
+    hk_today_date = task.get("typd", 0)
+
     log = task.get("log", [])
     batch_ts = find_batch_timestamps(log)
 
@@ -127,16 +131,22 @@ for task in data["tasks"]:
         hk_entries = [e for e in entries if e["t"] == 15]
 
         if is_numeric and hk_entries:
-            # Deduplicate: Streaks writes duplicate t=15 entries with identical p values.
-            # Only count each unique p value once per day to avoid inflating totals.
-            seen_p = set()
-            deduped_values = []
-            for e in hk_entries:
-                p = e.get("p", 0)
-                if p not in seen_p:
-                    seen_p.add(p)
-                    deduped_values.append(p)
-            day_total = sum(deduped_values)
+            # Use Streaks app's own authoritative total for the day it computed (typ/typd).
+            # For all other days, deduplicate t=15 entries by unique p value.
+            # Streaks writes duplicate t=15 entries (2-3x per item with identical p values
+            # but different IDs). p-value dedup is close but can slightly undercount if
+            # two genuinely different items have the exact same value.
+            if hk_today_val and date_int == hk_today_date:
+                day_total = float(hk_today_val)
+            else:
+                seen_p = set()
+                deduped_values = []
+                for e in hk_entries:
+                    p = e.get("p", 0)
+                    if p not in seen_p:
+                        seen_p.add(p)
+                        deduped_values.append(p)
+                day_total = sum(deduped_values)
             values_list.append(round(day_total, 1) if day_total else None)
 
             if has_manual_done:
