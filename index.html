@@ -91,7 +91,11 @@
   }
 
   td.week-sep { border-left: 1px solid var(--border); }
-  td.today-sep { border-left: 2px solid var(--red); }
+  td.today-sep { position: relative; }
+  td.today-sep::before {
+    content: ''; position: absolute; left: -1px; top: 12px; bottom: 0;
+    width: 2px; background: var(--red);
+  }
   .today-label {
     position: absolute; top: 0; left: -1px;
     transform: translateX(-50%);
