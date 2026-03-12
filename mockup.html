@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Lucas Chatham - Habit Tracker</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --green: #2EE05A;
+    --yellow: #F0B429;
+    --red: #F85149;
+    --cat-header: #1c2128;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    padding: 24px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 100;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header .sub { color: var(--text-muted); font-size: 13px; margin-top: 6px; line-height: 1.5; max-width: 480px; }
+
+  .cards {
+    display: flex; gap: 10px; padding: 16px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px; min-width: 130px; flex-shrink: 0;
+  }
+  .card .v { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+  .card .l { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  .fb {
+    display: grid; grid-template-columns: repeat(3, auto);
+    gap: 6px; padding: 8px 16px 10px; justify-content: start;
+  }
+  .fb button {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s ease;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 12px 7px; text-align: center; line-height: 1.2;
+    min-height: 44px; width: auto;
+  }
+  .fb button .desc {
+    font-size: 9px; font-weight: 400; color: var(--text-muted);
+    margin-top: 2px; line-height: 1;
+  }
+  .fb button:hover, .fb button.on {
+    color: var(--text); border-color: var(--green); background: rgba(63,185,80,0.12);
+  }
+
+  .hm-wrap { padding: 4px 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
+
+  table th.name {
+    font-weight: 500; color: var(--text-muted); padding: 2px 8px 2px 16px;
+    white-space: nowrap; position: sticky; left: 0; background: var(--bg); z-index: 10;
+    text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12px;
+  }
+
+  /* Slim category dividers */
+  .cat td {
+    background: var(--cat-header); font-weight: 600; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+    padding: 6px 16px 4px; position: sticky; left: 0; z-index: 10;
+  }
+
+  /* Week labels */
+  .week-label {
+    font-size: 9px; color: var(--text-muted); font-weight: 500;
+    padding: 2px 0; text-align: center; vertical-align: bottom;
+    height: 60px; white-space: nowrap; position: relative;
+  }
+  .week-label .wt {
+    display: block; position: absolute; bottom: 16px; left: 50%;
+    transform: translateX(-50%) rotate(-90deg);
+    transform-origin: center center;
+    white-space: nowrap; font-size: 9px;
+  }
+
+  td.week-sep { border-left: 1px solid var(--border); }
+  td.today-sep { border-left: 2px solid var(--red); }
+  .today-label {
+    position: absolute; top: 2px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  }
+
+  .row-num {
+    font-size: 10px; color: var(--text-muted); text-align: right;
+    padding: 0 6px 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums;
+    position: sticky; left: 0; background: var(--bg); z-index: 9;
+  }
+
+  .sq {
+    width: 14px; height: 14px; border-radius: 3px;
+    cursor: pointer; transition: transform 0.1s;
+  }
+  .sq:hover { transform: scale(1.6); z-index: 5; }
+  .sq.done { background: var(--green); }
+  .sq.close { background: var(--yellow); }
+  .sq.miss { background: var(--red); }
+  .sq.nd { background: #13161b; }
+
+  .num {
+    min-width: 30px; height: 14px; border-radius: 3px;
+    font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.95);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.1s;
+    white-space: nowrap; padding: 0 2px;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.3px;
+  }
+  .num:hover { transform: scale(1.4); z-index: 5; }
+  .num.done { background: var(--green); }
+  .num.close { background: var(--yellow); }
+  .num.miss { background: var(--red); }
+  .num.nd { background: #13161b; color: transparent; }
+
+  .stat-left {
+    font-size: 11px; padding: 2px 10px 2px 4px; text-align: right;
+    white-space: nowrap; font-weight: 500; font-variant-numeric: tabular-nums;
+  }
+
+  .tt {
+    display: none; position: fixed; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 13px; z-index: 1000;
+    pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    max-width: 260px; backdrop-filter: blur(8px);
+  }
+  .tt.vis { display: block; }
+  .tt .th { font-weight: 700; font-size: 14px; }
+  .tt .td { color: var(--text-muted); font-size: 12px; margin-top: 1px; }
+  .tt .tv { margin-top: 6px; font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+  .tt .ts { margin-top: 3px; font-size: 12px; font-weight: 500; }
+
+  .leg {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px 20px; font-size: 11px; color: var(--text-muted);
+  }
+  .lc { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  td.c { padding: 0; }
+
+  @media (max-width: 480px) {
+    .header { padding: 20px 12px 12px; }
+    .header h1 { font-size: 20px; }
+    .cards { padding: 12px; gap: 8px; }
+    .card { padding: 12px 14px; min-width: 110px; border-radius: 10px; }
+    .card .v { font-size: 24px; }
+    .fb { gap: 5px; padding: 6px 12px 8px; }
+    .fb button { font-size: 11px; min-height: 40px; padding: 6px 4px 5px; }
+    .fb button .desc { font-size: 8px; }
+    table th.name { max-width: 140px; font-size: 11px; padding-left: 12px; }
+    .sq { width: 12px; height: 12px; }
+    .num { min-width: 26px; height: 12px; font-size: 7px; }
+    .week-label { height: 52px; }
+    .week-label .wt { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Lucas Chatham</h1>
+  <div class="sub">A public experiment in accountability. Every day I track 24 habits across health, productivity, and personal growth. This dashboard shows the real data, unfiltered. Green means I showed up, red means I didn't.</div>
+</div>
+<div class="cards" id="cards"></div>
+<div class="fb" id="fb"></div>
+<div class="hm-wrap" id="hm"></div>
+<div class="leg">
+  <span class="lc" style="background:var(--green)"></span><span>Hit target</span>
+  <span class="lc" style="background:var(--yellow)"></span><span>Close</span>
+  <span class="lc" style="background:var(--red)"></span><span>Missed</span>
+  <span class="lc" style="background:#13161b"></span><span>No data</span>
+</div>
+<div class="tt" id="tt"><div class="th"></div><div class="td"></div><div class="tv"></div><div class="ts"></div></div>
+<script>
+const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "Uncategorized", "order": 0, "completions": [0, 1, 0, 1, 0, 1, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 1, 0, -1, -1, -1, -1, 0, 0, 0, -1, -1, -1, 0, 1, 0, 0, 1, 0, 0, -1, -1, -1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, -1], "done": 27, "missed": 50, "logged": 77, "numeric": true, "unit": "hours", "target": 7.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\u2600\ufe0f 15min In Sunlight", "category": "Uncategorized", "order": 1, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, -1, -1, -1, 1, 1, 0, -1], "done": 15, "missed": 18, "logged": 33, "numeric": true, "unit": "seconds", "target": 600.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\ud83c\udfcb\ufe0f Burn 650+ kcal", "category": "Uncategorized", "order": 2, "completions": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, -1], "done": 31, "missed": 76, "logged": 107, "numeric": true, "unit": "kcal", "target": 500.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\ud83d\udc8a AM Supplements", "category": "Uncategorized", "order": 3, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83e\udea5 AM Brush Teeth", "category": "Uncategorized", "order": 4, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1], "done": 24, "missed": 0, "logged": 24}, {"name": "\ud83e\uddfc AM Wash Face", "category": "Uncategorized", "order": 5, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1], "done": 23, "missed": 0, "logged": 23}, {"name": "\ud83c\udfaf Complete 3 Key Tasks", "category": "Uncategorized", "order": 6, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1], "done": 5, "missed": 0, "logged": 5}, {"name": "\ud83d\udce5 Process Inboxes 2x 20m", "category": "Uncategorized", "order": 7, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83e\uddfe 1 Social Media Post", "category": "Uncategorized", "order": 8, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 1, "missed": 0, "logged": 1}, {"name": "\ud83e\uddd8\u200d\u2642\ufe0f Meditate OR Peak", "category": "Uncategorized", "order": 9, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1], "done": 17, "missed": 0, "logged": 17}, {"name": "\ud83d\udcbb Ship 1 Code Commit", "category": "Uncategorized", "order": 10, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 9, "missed": 0, "logged": 9}, {"name": "\ud83c\udfa7 Deep Work Task 90m", "category": "Uncategorized", "order": 11, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 19, "missed": 0, "logged": 19}, {"name": "\ud83d\udcb0 Review Financial Dashboard", "category": "Uncategorized", "order": 12, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 1, "missed": 0, "logged": 1}, {"name": "\ud83e\udd5b Eat 180g+ Protein", "category": "Uncategorized", "order": 13, "completions": [-1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0], "done": 14, "missed": 41, "logged": 55, "numeric": true, "unit": "grams", "target": 180.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 214.9, 197.0, 537.1, 142.7, 84.0, 196.2, 18.5, 9.0, 211.5, null, null, 32.2, null, 155.3, 445.7, 299.3, 524.6, 96, null, 116.9, 482.6, 277.1, 271.5, 286.0, 215.3, null, 195.6, null, 333.1, 440.8, 223.0, 1, null, null, 231.7, 480.7, 106.2]}, {"name": "\ud83d\udca7Drink 100oz Water", "category": "Day", "order": 14, "completions": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0], "done": 50, "missed": 58, "logged": 108, "numeric": true, "unit": "floz_us", "target": 100.0, "values": [null, null, null, null, null, null, 32.0, 48.6, 3.4, 14.2, 38.6, null, null, null, null, null, null, 72.8, 35.4, null, null, 47.3, null, null, 100.2, null, null, null, null, null, null, null, null, null, 53.0, 14.3, null, null, 53.0, 10.4, 20.6, 11.3, 64.2, 177.3, 40.5, 20.7, 17.9, 89.1, 53.4, 32.1, 5.0, 12.1, 45.5, null, null, null, 57.4, 28.2, 15.9, 17.5, null, null, 7.3, 48.2, 31.9, 15.3, null, 5.8, null, 21.5, 27.7, 114.5, 170.8, 30.4, 6.0, 21.7, 11.1, 22.4, null, 29.2, 4.1, null, 0.3, 20.5, 7.8, 102.8, 99.4, 139.5, null, null, 10.4, 136.2, 145.2, 25.2, 39.1, 39.7, null, 176.0, null, 55.2, 102.8, 16.4, null, null, null, 163.7, 42.1, 18.5]}, {"name": "\ud83c\udf7d\ufe0f Eat <2200 Kcal", "category": "Uncategorized", "order": 15, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0], "done": 13, "missed": 25, "logged": 38, "numeric": true, "unit": "kcal", "target": 2200.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2692.9, 8617.4, 6599.8, 5266.9, 1823.2, 1014.7, 2202.5, 4873.3, 330, 3964.3, 746.7, null, 391.1, 1495.6, 1642.6, 4183.9, 4571.7, 5211.2, 930.0, null, 2038.2, 5637.7, 5192.4, 4285.9, 3319.1, 2418.9, null, 4231.6, null, 3889.8, 4998.7, 2203.9, 240, null, null, 3451.3, 4570.2, 1280.1]}, {"name": "\ud83d\udcca Freedom Focus", "category": "Uncategorized", "order": 16, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\u2696\ufe0f Weekly Checkin", "category": "Uncategorized", "order": 17, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 0, "missed": 0, "logged": 0}, {"name": "\ud83e\uddfc PM Wash Face", "category": "Uncategorized", "order": 18, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 12, "missed": 0, "logged": 12}, {"name": "\ud83e\udea5 PM Brush Teeth", "category": "Uncategorized", "order": 19, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1], "done": 3, "missed": 13, "logged": 16}, {"name": "\ud83e\uddf5 Floss + Retainers", "category": "Uncategorized", "order": 20, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 12, "missed": 0, "logged": 12}, {"name": "\ud83d\udcd6 Read for 15min", "category": "Uncategorized", "order": 21, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 0, "missed": 0, "logged": 0}, {"name": "\ud83d\udc8a PM Supplements", "category": "Uncategorized", "order": 22, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83d\udcdd Journal: Reflect & Plan", "category": "Uncategorized", "order": 23, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 5, "missed": 0, "logged": 5}], "dates": ["2025-11-25", "2025-11-26", "2025-11-27", "2025-11-28", "2025-11-29", "2025-11-30", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-06", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12"]};
+(function(){
+  const {habits, dates} = D;
+
+  function getWeekMonday(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return d;
+  }
+
+  // Streak skipping trailing no-data
+  function getStreak(c) {
+    let s = 0, started = false;
+    for (let i = c.length - 1; i >= 0; i--) {
+      if (c[i] === -1 && !started) continue;
+      started = true;
+      if (c[i] === 1) s++;
+      else break;
+    }
+    return s;
+  }
+
+  // Trend: second half vs first half
+  function getTrend(h) {
+    const mid = Math.floor(dates.length / 2);
+    let r = {d:0,l:0}, p = {d:0,l:0};
+    for (let i = 0; i < dates.length; i++) {
+      if (h.completions[i] === -1) continue;
+      const b = i >= mid ? r : p;
+      b.l++; if (h.completions[i] === 1) b.d++;
+    }
+    return { recent: r.l>0?r.d/r.l:0, prior: p.l>0?p.d/p.l:0, delta: (r.l>0?r.d/r.l:0)-(p.l>0?p.d/p.l:0) };
+  }
+
+  // Stats
+  const pc = p => p >= 70 ? 'var(--green)' : p >= 40 ? 'var(--yellow)' : 'var(--red)';
+
+  // Days tracked
+  const daysTracked = dates.length;
+
+  // This week so far (current Mon-today)
+  const todayIdx = dates.length - 1;
+  const todayDate = new Date(dates[todayIdx] + 'T12:00:00');
+  const todayDay = todayDate.getDay();
+  const monOffset = todayDay === 0 ? 6 : todayDay - 1;
+  const thisWeekStart = Math.max(0, todayIdx - monOffset);
+  let twD = 0, twL = 0;
+  for (let i = thisWeekStart; i <= todayIdx; i++) {
+    habits.forEach(h => {
+      if (h.completions[i] === 1) { twD++; twL++; }
+      else if (h.completions[i] === 0) { twL++; }
+    });
+  }
+  const thisWeekPct = twL > 0 ? Math.round(twD / twL * 100) : 0;
+
+  // Last week (previous Mon-Sun)
+  const lastWeekEnd = thisWeekStart - 1;
+  const lastWeekStart = Math.max(0, lastWeekEnd - 6);
+  let lwD = 0, lwL = 0;
+  if (lastWeekEnd >= 0) {
+    for (let i = lastWeekStart; i <= lastWeekEnd; i++) {
+      habits.forEach(h => {
+        if (h.completions[i] === 1) { lwD++; lwL++; }
+        else if (h.completions[i] === 0) { lwL++; }
+      });
+    }
+  }
+  const lastWeekPct = lwL > 0 ? Math.round(lwD / lwL * 100) : 0;
+  const trendDelta = thisWeekPct - lastWeekPct;
+  const trendStr = (trendDelta >= 0 ? '+' : '') + trendDelta + '%';
+  const trendColor = trendDelta > 0 ? 'var(--green)' : trendDelta < 0 ? 'var(--red)' : 'var(--yellow)';
+
+  document.getElementById('cards').innerHTML =
+    '<div class="card"><div class="v" style="color:var(--text)">'+daysTracked+'</div><div class="l">Days Tracked</div></div>' +
+    '<div class="card"><div class="v" style="color:'+pc(thisWeekPct)+'">'+thisWeekPct+'%</div><div class="l">This Week So Far</div></div>' +
+    '<div class="card"><div class="v" style="color:'+trendColor+'">'+trendStr+'</div><div class="l">Weekly Trend</div></div>';
+
+  // Performance-based filters
+  const fb = document.getElementById('fb');
+  let activeFilter = 'all';
+
+
+  const shortDesc = {
+    all: 'Last 90 days',
+    week: 'Last 7 days',
+    weeklyavg: 'YTD by week',
+    streaks: 'Longest first',
+    improving: 'Trending better',
+    struggling: 'Below 50%'
+  };
+
+  function addFilter(label, key) {
+    const b = document.createElement('button');
+    b.className = key === 'all' ? 'on' : '';
+    const span = document.createElement('span');
+    span.textContent = label;
+    b.appendChild(span);
+    const desc = document.createElement('span');
+    desc.className = 'desc';
+    desc.textContent = shortDesc[key] || '';
+    b.appendChild(desc);
+    b.onclick = () => {
+      activeFilter = key; render();
+      fb.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    };
+    fb.appendChild(b);
+  }
+  addFilter('All', 'all');
+  addFilter('This Week', 'week');
+  addFilter('On Fire', 'streaks');
+  addFilter('Trending Up', 'improving');
+  addFilter('Needs Work', 'struggling');
+  addFilter('Weekly Avg', 'weeklyavg');
+
+  function getCat(h) {
+    const n = h.name.toLowerCase();
+    if (n.includes('weekly') || n.includes('check-in') || n.includes('checkin')) return 'weekly';
+    return 'daily';
+  }
+
+  // Sort by app order (position in Streaks app)
+  function appSort(list) {
+    return list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  }
+
+  // Tooltip
+  const tt = document.getElementById('tt');
+  function stt(ev, h, di) {
+    tt.querySelector('.th').textContent = h.name;
+    tt.querySelector('.td').textContent = dates[di];
+    const vE = tt.querySelector('.tv'), sE = tt.querySelector('.ts');
+    if (h.numeric && h.values && h.values[di] !== null) {
+      vE.textContent = fmtVal(h.values[di], h.unit) + ' of ' + fmtVal(h.target, h.unit) + ' target';
+      vE.style.color = h.completions[di] === 1 ? 'var(--green)' : h.values[di] / h.target >= 0.75 ? 'var(--yellow)' : 'var(--red)';
+      vE.style.display = 'block';
+    } else { vE.style.display = 'none'; }
+    const s = h.completions[di];
+    sE.textContent = s === 1 ? 'Completed' : s === 0 ? 'Missed' : 'No data';
+    sE.style.color = s === 1 ? 'var(--green)' : s === 0 ? 'var(--red)' : 'var(--text-muted)';
+    const r = ev.target.getBoundingClientRect();
+    let left = r.left + r.width/2, top = r.top - 85;
+    if (top < 10) top = r.bottom + 8;
+    if (left + 130 > window.innerWidth) left = window.innerWidth - 140;
+    if (left < 10) left = 10;
+    tt.style.left = left+'px'; tt.style.top = top+'px';
+    tt.classList.add('vis');
+  }
+  function htt() { tt.classList.remove('vis'); }
+
+  function cc(h, di) {
+    const s = h.completions[di];
+    if (s === -1) return 'nd';
+    if (s === 1) return 'done';
+    if (h.numeric && h.values && h.values[di] !== null && h.target && h.values[di] / h.target >= 0.75) return 'close';
+    return 'miss';
+  }
+
+  function fmtVal(v, unit) {
+    if (unit === 'kcal') return Math.round(v).toLocaleString();
+    if (unit === 'grams') return Math.round(v) + 'g';
+    if (unit === 'floz_us') return Math.round(v) + 'oz';
+    if (unit === 'hours') return v.toFixed(1) + 'h';
+    if (unit === 'seconds') return Math.round(v / 60) + 'm';
+    return Math.round(v);
+  }
+
+  function fmtCompact(v, unit) {
+    if (unit === 'kcal') return v >= 1000 ? (v/1000).toFixed(1)+'k' : Math.round(v);
+    if (unit === 'grams') return Math.round(v);
+    if (unit === 'floz_us') return Math.round(v);
+    if (unit === 'hours') return v.toFixed(1);
+    if (unit === 'seconds') return Math.round(v/60);
+    return Math.round(v);
+  }
+
+  function render() {
+    const container = document.getElementById('hm');
+    const t = document.createElement('table');
+
+    // Weekly avg mode: group by ISO weeks, YTD only
+    const isWeeklyAvg = activeFilter === 'weeklyavg';
+    let weekGroups = []; // [{label, indices: [di, ...]}]
+
+    // REVERSED: most recent dates first (left side of screen)
+    let visIdx;
+    if (isWeeklyAvg) {
+      const ytdStart = dates.findIndex(d => d >= '2026-01-01');
+      // Build week groups
+      let curWeek = null;
+      for (let i = ytdStart; i < dates.length; i++) {
+        const mon = getWeekMonday(dates[i]);
+        const ms = mon.toISOString().slice(0, 10);
+        if (!curWeek || curWeek.key !== ms) {
+          curWeek = { key: ms, label: mon.toLocaleDateString('en-US', {month:'short', day:'numeric'}), indices: [] };
+          weekGroups.push(curWeek);
+        }
+        curWeek.indices.push(i);
+      }
+      weekGroups.reverse();
+      visIdx = null; // not used in weekly avg mode
+    } else if (activeFilter === 'week') {
+      visIdx = [];
+      for (let i = dates.length - 1; i >= Math.max(0, dates.length - 7); i--) visIdx.push(i);
+    } else {
+      visIdx = [];
+      for (let i = dates.length - 1; i >= 0; i--) visIdx.push(i);
+    }
+
+    // Week boundaries (for daily views)
+    const weeks = [];
+    let weekSet = new Set();
+    if (!isWeeklyAvg) {
+      let lastMon = '';
+      visIdx.forEach((di, vi) => {
+        const mon = getWeekMonday(dates[di]);
+        const ms = mon.toISOString().slice(0, 10);
+        if (ms !== lastMon) {
+          weeks.push({ vi: vi, label: mon.toLocaleDateString('en-US', {month:'short', day:'numeric'}) });
+          lastMon = ms;
+        }
+      });
+      weekSet = new Set(weeks.map(w => w.vi));
+    }
+
+    // Find today's position in visIdx for red line
+    const todayStr = dates[dates.length - 1];
+    let todayVi = -1;
+    if (!isWeeklyAvg && visIdx) {
+      todayVi = visIdx.indexOf(dates.length - 1);
+    }
+    // Also build a set of "today" column positions
+    const todaySet = new Set();
+    if (todayVi >= 0) todaySet.add(todayVi);
+
+    // Header row
+    const hRow = document.createElement('tr');
+    const numH = document.createElement('th'); // # column spacer
+    numH.className = 'row-num';
+    numH.textContent = '#';
+    hRow.appendChild(numH);
+    hRow.appendChild(document.createElement('th')); // name spacer
+    // Week % header (far left, after name)
+    const wpH = document.createElement('td');
+    wpH.className = 'stat-left';
+    wpH.style.color = 'var(--text-muted)';
+    wpH.textContent = 'Week %';
+    hRow.appendChild(wpH);
+
+    if (isWeeklyAvg) {
+      weekGroups.forEach((wg, wi) => {
+        const td = document.createElement('td');
+        td.className = 'week-label';
+        if (wi > 0) td.classList.add('week-sep');
+        const span = document.createElement('span');
+        span.className = 'wt';
+        span.textContent = wg.label;
+        td.appendChild(span);
+        hRow.appendChild(td);
+      });
+    } else {
+      let wi = 0;
+      for (let i = 0; i < visIdx.length; i++) {
+        const td = document.createElement('td');
+        td.className = 'week-label';
+        if (weekSet.has(i) && i > 0) td.classList.add('week-sep');
+        if (todaySet.has(i)) {
+          td.classList.add('today-sep');
+          const tl = document.createElement('span');
+          tl.className = 'today-label';
+          tl.textContent = 'Today';
+          td.appendChild(tl);
+        }
+        if (wi < weeks.length && weeks[wi].vi === i) {
+          const span = document.createElement('span');
+          span.className = 'wt';
+          span.textContent = weeks[wi].label;
+          td.appendChild(span);
+          const nextStart = wi + 1 < weeks.length ? weeks[wi + 1].vi : visIdx.length;
+          td.colSpan = nextStart - i;
+          i += td.colSpan - 1;
+          wi++;
+        }
+        hRow.appendChild(td);
+      }
+    }
+    t.appendChild(hRow);
+
+    // Filter habits (all rows always visible)
+    let visible;
+
+    switch (activeFilter) {
+      case 'streaks':
+        visible = [...habits].sort((a,b) => getStreak(b.completions) - getStreak(a.completions));
+        break;
+      case 'improving':
+        visible = [...habits].sort((a,b) => getTrend(b).delta - getTrend(a).delta);
+        break;
+      case 'struggling':
+        visible = [...habits].sort((a,b) => {
+          const aR = a.logged > 0 ? a.done/a.logged : 1;
+          const bR = b.logged > 0 ? b.done/b.logged : 1;
+          return aR - bR;
+        });
+        break;
+      default:
+        visible = [...habits];
+    }
+
+    const useGroups = activeFilter === 'all' || activeFilter === 'week' || activeFilter === 'weeklyavg';
+
+    let rowNum = 0;
+    function renderRow(h) {
+      rowNum++;
+      const row = document.createElement('tr');
+      const numTd = document.createElement('td');
+      numTd.className = 'row-num';
+      numTd.textContent = rowNum;
+      row.appendChild(numTd);
+      const nth = document.createElement('th');
+      nth.className = 'name'; nth.textContent = h.name; nth.title = h.name;
+      row.appendChild(nth);
+
+      // Week % (last 7 days completion rate), placed far left after name
+      let wkD = 0, wkL = 0;
+      for (let i = Math.max(0, dates.length - 7); i < dates.length; i++) {
+        if (h.completions[i] === 1) { wkD++; wkL++; }
+        else if (h.completions[i] === 0) { wkL++; }
+      }
+      const wpTd = document.createElement('td');
+      wpTd.className = 'stat-left';
+      const wkPct = wkL > 0 ? Math.round(wkD / wkL * 100) : -1;
+      wpTd.textContent = wkPct >= 0 ? wkPct + '%' : '';
+      wpTd.style.color = wkPct >= 70 ? 'var(--green)' : wkPct >= 40 ? 'var(--yellow)' : wkPct >= 0 ? 'var(--red)' : 'var(--text-muted)';
+      row.appendChild(wpTd);
+
+      const isNum = h.numeric && h.values;
+
+      if (isWeeklyAvg) {
+        // Weekly avg: one cell per week group
+        weekGroups.forEach((wg, wi) => {
+          const td = document.createElement('td');
+          td.className = 'c';
+          if (wi > 0) td.classList.add('week-sep');
+
+          let wDone = 0, wLogged = 0;
+          wg.indices.forEach(di => {
+            if (h.completions[di] === 1) { wDone++; wLogged++; }
+            else if (h.completions[di] === 0) { wLogged++; }
+          });
+
+          const inner = document.createElement('div');
+          inner.className = 'sq';
+          if (wLogged === 0) {
+            inner.classList.add('nd');
+          } else {
+            const rate = wDone / wLogged;
+            inner.classList.add(rate >= 0.7 ? 'done' : rate >= 0.4 ? 'close' : 'miss');
+          }
+          // Tooltip for weekly avg
+          inner.addEventListener('mouseenter', e => {
+            tt.querySelector('.th').textContent = h.name;
+            tt.querySelector('.td').textContent = wg.label + ' week';
+            const vE = tt.querySelector('.tv'), sE = tt.querySelector('.ts');
+            if (wLogged > 0) {
+              vE.textContent = wDone + '/' + wLogged + ' days';
+              vE.style.color = wDone/wLogged >= 0.7 ? 'var(--green)' : wDone/wLogged >= 0.4 ? 'var(--yellow)' : 'var(--red)';
+              vE.style.display = 'block';
+            } else { vE.style.display = 'none'; }
+            sE.textContent = wLogged > 0 ? Math.round(wDone/wLogged*100) + '% that week' : 'No data';
+            sE.style.color = wLogged > 0 ? (wDone/wLogged >= 0.7 ? 'var(--green)' : 'var(--yellow)') : 'var(--text-muted)';
+            const r = e.target.getBoundingClientRect();
+            let left = r.left + r.width/2, top = r.top - 85;
+            if (top < 10) top = r.bottom + 8;
+            if (left + 130 > window.innerWidth) left = window.innerWidth - 140;
+            if (left < 10) left = 10;
+            tt.style.left = left+'px'; tt.style.top = top+'px';
+            tt.classList.add('vis');
+          });
+          inner.addEventListener('mouseleave', htt);
+          inner.addEventListener('touchstart', e => {
+            e.preventDefault();
+            inner.dispatchEvent(new Event('mouseenter'));
+            setTimeout(htt, 2500);
+          });
+          td.appendChild(inner);
+          row.appendChild(td);
+        });
+      } else {
+        // Daily view
+        visIdx.forEach((di, vi) => {
+          const td = document.createElement('td');
+          td.className = 'c';
+          if (weekSet.has(vi) && vi > 0) td.classList.add('week-sep');
+          if (todaySet.has(vi)) td.classList.add('today-sep');
+
+          if (isNum && h.values[di] !== null) {
+            const inner = document.createElement('div');
+            inner.className = 'num ' + cc(h, di);
+            inner.textContent = fmtCompact(h.values[di], h.unit);
+            inner.addEventListener('mouseenter', e => stt(e, h, di));
+            inner.addEventListener('mouseleave', htt);
+            inner.addEventListener('touchstart', e => { e.preventDefault(); stt(e, h, di); setTimeout(htt, 2500); });
+            td.appendChild(inner);
+          } else {
+            const inner = document.createElement('div');
+            inner.className = 'sq ' + cc(h, di);
+            inner.addEventListener('mouseenter', e => stt(e, h, di));
+            inner.addEventListener('mouseleave', htt);
+            inner.addEventListener('touchstart', e => { e.preventDefault(); stt(e, h, di); setTimeout(htt, 2500); });
+            td.appendChild(inner);
+          }
+          row.appendChild(td);
+        });
+      }
+
+      t.appendChild(row);
+    }
+
+    if (useGroups) {
+      const grouped = {};
+      visible.forEach(h => { const c = getCat(h); if (!grouped[c]) grouped[c]=[]; grouped[c].push(h); });
+      const order = ['daily','weekly'];
+      const labels = {daily:'Daily', weekly:'Weekly'};
+
+      order.forEach(gc => {
+        if (!grouped[gc] || !grouped[gc].length) return;
+        appSort(grouped[gc]);
+        const cr = document.createElement('tr'); cr.className = 'cat';
+        const cth = document.createElement('td');
+        cth.colSpan = (isWeeklyAvg ? weekGroups.length : visIdx.length) + 3;
+        cth.textContent = labels[gc];
+        cr.appendChild(cth);
+        t.appendChild(cr);
+        grouped[gc].forEach(renderRow);
+      });
+    } else {
+      const filterLabels = { streaks:'On Fire (Active Streaks)', improving:'Trending Up', struggling:'Needs Work (<50%)' };
+      if (visible.length > 0) {
+        const cr = document.createElement('tr'); cr.className = 'cat';
+        const cth = document.createElement('td');
+        cth.colSpan = (isWeeklyAvg ? weekGroups.length : visIdx.length) + 3;
+        cth.textContent = filterLabels[activeFilter] || '';
+        cr.appendChild(cth);
+        t.appendChild(cr);
+        visible.forEach(renderRow);
+      }
+    }
+
+    if (visible.length === 0) {
+      const er = document.createElement('tr');
+      const etd = document.createElement('td');
+      etd.colSpan = (isWeeklyAvg ? weekGroups.length : visIdx.length) + 3;
+      etd.style.cssText = 'padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;';
+      etd.textContent = activeFilter==='improving' ? 'No habits trending up right now' :
+                         activeFilter==='struggling' ? 'No habits below 50% with enough data' :
+                         activeFilter==='streaks' ? 'No active streaks' : 'No habits to show';
+      er.appendChild(etd);
+      t.appendChild(er);
+    }
+
+    container.innerHTML = '';
+    container.appendChild(t);
+
+  }
+
+  render();
+})();
+</script>
+</body></html>
