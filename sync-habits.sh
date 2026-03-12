@@ -87,6 +87,10 @@ else
   git commit -m "Daily sync: $(date +%Y-%m-%d) habit data update"
   git push origin master >> "$LOG" 2>&1
   echo "$(date): Pushed to GitHub" >> "$LOG"
+
+  # Deploy to Vercel
+  vercel deploy --prod --yes >> "$LOG" 2>&1
+  echo "$(date): Deployed to Vercel" >> "$LOG"
 fi
 
 echo "$(date): Sync complete" >> "$LOG"
