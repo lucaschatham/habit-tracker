@@ -43,24 +43,22 @@
   .card .l { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
   .fb {
-    display: grid; grid-template-columns: repeat(3, auto);
-    gap: 6px; padding: 8px 16px 10px; justify-content: start;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 4px; padding: 6px 16px 8px; max-width: 320px;
   }
   .fb button {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; font-size: 12px; font-weight: 600;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 6px; font-size: 11px; font-weight: 600;
     cursor: pointer; transition: all 0.15s ease;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 8px 12px 7px; text-align: center; line-height: 1.2;
-    min-height: 44px; width: auto;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6px 4px; text-align: center; line-height: 1;
+    min-height: 32px;
   }
-  .fb button .desc {
-    font-size: 9px; font-weight: 400; color: var(--text-muted);
-    margin-top: 2px; line-height: 1;
+  .fb button:hover { color: var(--text); border-color: var(--border); background: var(--surface); }
+  .fb button.on {
+    color: var(--text); border-color: var(--green); background: rgba(46,224,90,0.15);
   }
-  .fb button:hover, .fb button.on {
-    color: var(--text); border-color: var(--green); background: rgba(63,185,80,0.12);
-  }
+  .fb button:active { transform: scale(0.97); }
 
   .hm-wrap { padding: 4px 0; overflow: auto; -webkit-overflow-scrolling: touch; }
   table { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
@@ -163,9 +161,8 @@
     .cards { padding: 12px; gap: 8px; }
     .card { padding: 12px 14px; min-width: 110px; border-radius: 10px; }
     .card .v { font-size: 24px; }
-    .fb { gap: 5px; padding: 6px 12px 8px; }
-    .fb button { font-size: 11px; min-height: 40px; padding: 6px 4px 5px; }
-    .fb button .desc { font-size: 8px; }
+    .fb { gap: 3px; padding: 4px 12px 6px; max-width: 280px; }
+    .fb button { font-size: 10px; min-height: 28px; padding: 5px 2px; }
     table th.name { max-width: 140px; font-size: 11px; padding-left: 12px; }
     .sq { width: 12px; height: 12px; }
     .num { min-width: 26px; height: 12px; font-size: 7px; }
@@ -285,13 +282,8 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   function addFilter(label, key) {
     const b = document.createElement('button');
     b.className = key === 'all' ? 'on' : '';
-    const span = document.createElement('span');
-    span.textContent = label;
-    b.appendChild(span);
-    const desc = document.createElement('span');
-    desc.className = 'desc';
-    desc.textContent = shortDesc[key] || '';
-    b.appendChild(desc);
+    b.textContent = label;
+    b.title = shortDesc[key] || '';
     b.onclick = () => {
       activeFilter = key; render();
       fb.querySelectorAll('button').forEach(x => x.classList.remove('on'));
@@ -300,11 +292,11 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
     fb.appendChild(b);
   }
   addFilter('All', 'all');
-  addFilter('This Week', 'week');
+  addFilter('Week', 'week');
   addFilter('On Fire', 'streaks');
-  addFilter('Trending Up', 'improving');
-  addFilter('Needs Work', 'struggling');
-  addFilter('Weekly Avg', 'weeklyavg');
+  addFilter('Trending', 'improving');
+  addFilter('Struggling', 'struggling');
+  addFilter('Wk Avg', 'weeklyavg');
 
   function getCat(h) {
     const n = h.name.toLowerCase();
