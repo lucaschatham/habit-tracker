@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.lucaschatham.streaks-copy</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/HQ/Projects/habits.lucaschatham.com/copy-latest-streaks.sh</string>
+    </array>
+
+    <!-- Run at 9:50am daily — 10 min before the Cowork sync task fires at 10:00am -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>50</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/HQ/Projects/habits.lucaschatham.com/sync-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/HQ/Projects/habits.lucaschatham.com/sync-stderr.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

@@ -2,7 +2,7 @@ import json, re
 from datetime import datetime, timedelta
 from collections import Counter
 
-BACKUP_PATH = "/Users/HQ/Library/Mobile Documents/iCloud~com~streaksapp~streak/Documents/iPhone - 20260312T132835.streaks"
+BACKUP_PATH = "/sessions/cool-pensive-fermat/mnt/habits.lucaschatham.com/latest.streaks"
 OUTPUT_PATH = "/sessions/cool-pensive-fermat/mnt/habits.lucaschatham.com/streaks-data.json"
 
 START = datetime(2026, 3, 23)
