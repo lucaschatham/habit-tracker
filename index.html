@@ -30,6 +30,11 @@
   }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
   .header .sub { color: var(--text-muted); font-size: 13px; margin-top: 6px; line-height: 1.5; max-width: 480px; }
+  .sync-badge { display: inline-block; font-size: 13px; color: var(--text-muted); margin-top: 8px; letter-spacing: 0.3px; line-height: 1.5; }
+  .sync-badge .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .sync-badge .dot.fresh { background: var(--green); }
+  .sync-badge .dot.stale { background: var(--yellow); }
+  .sync-badge .dot.dead { background: var(--red); }
 
   .cards {
     display: flex; gap: 10px; padding: 16px;
@@ -152,6 +157,111 @@
 
   td.c { padding: 0; }
 
+
+.jump-nav { display: flex; gap: 6px; margin-top: 8px; }
+.jump-nav button {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 20px; font-size: 11px; font-weight: 600; padding: 4px 14px;
+  cursor: pointer; transition: all 0.15s;
+}
+.jump-nav button:hover { color: var(--text); border-color: var(--text-muted); }
+
+.week-carousel {
+  display: flex; gap: 12px; padding: 12px 16px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.week-carousel::-webkit-scrollbar { display: none; }
+
+.week-card {
+  flex: 0 0 85vw; max-width: 400px;
+  scroll-snap-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  transition: transform 0.2s;
+}
+
+.week-card .week-title {
+  font-size: 14px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 16px;
+}
+
+.week-card .photo-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+}
+.week-card .photo-grid img {
+  width: 100%; aspect-ratio: 3/4; object-fit: cover;
+  border-radius: 8px; background: #13161b;
+}
+.week-card .photo-placeholder {
+  width: 100%; aspect-ratio: 3/4;
+  border-radius: 8px; background: #13161b;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 11px;
+}
+
+.week-card .metrics {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.week-card .metric-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-top: 1px solid var(--border);
+}
+.week-card .metric-label {
+  font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.week-card .metric-value {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.week-card .metric-delta {
+  font-size: 12px; font-weight: 600; margin-left: 6px;
+}
+.week-card .metric-delta.positive { color: var(--green); }
+.week-card .metric-delta.negative { color: var(--red); }
+.week-card .metric-delta.neutral { color: var(--text-muted); }
+.week-card .metric-source {
+  font-size: 9px; color: var(--text-muted); font-style: italic;
+}
+
+.week-card .sparkline { margin-left: auto; }
+.week-card .sparkline svg { display: block; }
+
+.carousel-dots {
+  display: flex; justify-content: center; gap: 6px;
+  padding: 8px 16px 16px;
+}
+.carousel-dots .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border); transition: background 0.2s;
+}
+.carousel-dots .dot.active { background: var(--text); }
+
+.trend-chart {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
+}
+.trend-chart .chart-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px;
+}
+.trend-chart .chart-value {
+  font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.trend-chart .chart-unit {
+  font-size: 12px; color: var(--text-muted); font-weight: 500;
+}
+.trend-chart svg {
+  width: 100%; height: 80px; margin-top: 12px; display: block;
+}
+.trend-chart .chart-labels {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--text-muted); margin-top: 4px;
+}
+
   @media (max-width: 480px) {
     .header { padding: 20px 12px 12px; }
     .header h1 { font-size: 20px; }
@@ -165,14 +275,23 @@
     .num { font-size: 7px; }
     .week-label { height: 52px; }
     .week-label .wt { font-size: 8px; }
+    .week-card { flex: 0 0 90vw; padding: 16px; }
+    .week-card .metric-value { font-size: 20px; }
+    .trend-chart .chart-value { font-size: 24px; }
   }
 </style>
 </head>
 <body>
 <div class="header">
   <h1>Lucas Chatham</h1>
-  <div class="sub">A public experiment in accountability. I track 23 daily habits in <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a> on my iPhone. Every night at midnight, a script pulls the raw data from Streaks via iCloud, updates this page, and pushes it live. No manual edits, no filtering. Data may lag up to 24 hours. <span style="color:var(--green)">Green</span> = hit target. <span style="color:var(--yellow)">Yellow</span> = close, but either fell short or overshot the goal. <span style="color:var(--red)">Red</span> = missed. Experiment started March 12, 2026 (red line).</div>
+  <div class="jump-nav">
+    <button onclick="document.getElementById('habits-section').scrollIntoView({behavior:'smooth'})">Habits</button>
+    <button onclick="document.getElementById('body-section').scrollIntoView({behavior:'smooth'})">Body</button>
+  </div>
+  <div class="sub">A public experiment in accountability. I track daily habits in <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a> on my iPhone. Every morning, the raw data is pulled from Streaks via iCloud, this page is updated, and pushed live. No manual edits, no filtering. <span style="color:var(--green)">Green</span> = hit target. <span style="color:var(--yellow)">Yellow</span> = close, but either fell short or overshot the goal. <span style="color:var(--red)">Red</span> = missed.</div>
+  <div class="sync-badge" id="sync-badge"></div>
 </div>
+<div id="habits-section">
 <div class="cards" id="cards"></div>
 <div class="fb" id="fb"></div>
 <div class="hm-wrap" id="hm"></div>
@@ -182,11 +301,36 @@
   <span class="lc" style="background:var(--red)"></span><span>Missed</span>
   <span class="lc" style="background:#13161b"></span><span>No data</span>
 </div>
+</div>
+<div id="body-section" style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
+  <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Body Transformation</h2>
+  <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Weekly snapshots. Swipe to browse weeks.</p>
+</div>
+<div class="week-carousel" id="week-carousel"></div>
+<div class="carousel-dots" id="carousel-dots"></div>
+<div style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
+  <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Trends</h2>
+  <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Key metrics over time.</p>
+</div>
+<div id="trends-section" style="padding: 8px 16px 32px;"></div>
 <div class="tt" id="tt"><div class="th"></div><div class="td"></div><div class="tv"></div><div class="ts"></div></div>
 <script>
-const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "Uncategorized", "order": 0, "completions": [0, 1, 0, 1, 0, 1, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 1, 0, -1, -1, -1, -1, 0, 0, 0, -1, -1, -1, 0, 1, 0, 0, 1, 0, 0, -1, -1, -1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1], "done": 28, "missed": 50, "logged": 78, "numeric": true, "unit": "hours", "target": 7.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\u2600\ufe0f 15min In Sunlight", "category": "Uncategorized", "order": 1, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, -1, -1, -1, 1, 1, 0, 0], "done": 15, "missed": 19, "logged": 34, "numeric": true, "unit": "seconds", "target": 600.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\ud83c\udfcb\ufe0f Burn 500+ kcal", "category": "Uncategorized", "order": 2, "completions": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, -1], "done": 31, "missed": 76, "logged": 107, "numeric": true, "unit": "kcal", "target": 500.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, {"name": "\ud83d\udc8a AM Supplements + Wash Face", "category": "Uncategorized", "order": 3, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1], "done": 8, "missed": 0, "logged": 8}, {"name": "\ud83e\udea5 AM Brush Teeth", "category": "Uncategorized", "order": 4, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1], "done": 24, "missed": 0, "logged": 24}, {"name": "\u2696\ufe0f Weekly Checkin", "category": "Uncategorized", "order": 5, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0], "done": 0, "missed": 1, "logged": 1}, {"name": "\ud83c\udfaf Complete 3 Key Tasks", "category": "Uncategorized", "order": 6, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1], "done": 5, "missed": 0, "logged": 5}, {"name": "\ud83d\udce5 Process Inboxes 2x 20m", "category": "Uncategorized", "order": 7, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83e\uddfe 1 Social Media Post", "category": "Uncategorized", "order": 8, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 1, "missed": 0, "logged": 1}, {"name": "\ud83e\uddd8\u200d\u2642\ufe0f Meditate OR Peak", "category": "Uncategorized", "order": 9, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1], "done": 17, "missed": 0, "logged": 17}, {"name": "\ud83d\udcbb Ship 1 Code Commit", "category": "Uncategorized", "order": 10, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 9, "missed": 0, "logged": 9}, {"name": "\ud83c\udfa7 Deep Work Task 90m", "category": "Uncategorized", "order": 11, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 19, "missed": 0, "logged": 19}, {"name": "\ud83d\udcb0 Update Financial Dashboard", "category": "Uncategorized", "order": 12, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1], "done": 2, "missed": 0, "logged": 2}, {"name": "\ud83e\udd5b Eat 180g+ Protein", "category": "Uncategorized", "order": 13, "completions": [-1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0], "done": 12, "missed": 43, "logged": 55, "numeric": true, "unit": "grams", "target": 180.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 214.9, 197.0, 204.4, 142.7, 62.0, 196.2, 18.5, 9.0, 211.5, null, null, 32.2, null, 155.3, 272.0, 207.2, 237.4, 86, null, 116.9, 204.1, 174.4, 184.7, 148.3, 136.7, null, 195.6, null, 180.5, 195.0, 111.6, 1, null, null, 135.3, 232.8, 168.0]}, {"name": "\ud83d\udca7Drink 100oz Water", "category": "Day", "order": 14, "completions": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0], "done": 44, "missed": 64, "logged": 108, "numeric": true, "unit": "floz_us", "target": 100.0, "values": [null, null, null, null, null, null, 32.0, 18.3, 2.1, 14.2, 38.6, null, null, null, null, null, null, 26.9, 35.4, null, null, 23.6, null, null, 32.6, null, null, null, null, null, null, null, null, null, 21.9, 14.3, null, null, 21.0, 10.4, 6.9, 11.3, 35.5, 49.0, 10.9, 20.7, 17.9, 29.9, 45.1, 32.1, 5.0, 5.2, 45.5, null, null, null, 28.7, 28.2, 13.7, 10.4, null, null, 7.3, 18.9, 19.3, 15.3, null, 5.8, null, 12.8, 20.5, 11.2, 10.3, 10.2, 6.0, 20.9, 11.1, 18.9, null, 14.6, 4.1, null, 0.3, 20.5, 7.8, 12.8, 35.7, 30.1, null, null, 10.4, 22.7, 40.1, 12.6, 19.8, 19.8, null, 32.9, null, 35.1, 27.1, 8.2, null, null, null, 21.9, 23.2, 28.7]}, {"name": "\ud83c\udf7d\ufe0f Eat <2400 Kcal", "category": "Uncategorized", "order": 15, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], "done": 4, "missed": 34, "logged": 38, "numeric": true, "unit": "kcal", "target": 2400.0, "values": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2282.9, 2179.0, 2199.9, 2198.5, 1823.2, 662.3, 2202.5, 2530.4, 330, 2042.1, 746.7, null, 391.1, 1495.6, 1642.6, 2654.6, 2780.0, 2214.6, 720.0, null, 2038.2, 2315.0, 2280.4, 1763.0, 1745.7, 1399.5, null, 2140.8, null, 2297.2, 2323.6, 2203.9, 240, null, null, 2043.1, 2386.5, 2348.1]}, {"name": "\ud83d\udcca Freedom Focus", "category": "Uncategorized", "order": 16, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83e\uddfc PM Wash Face", "category": "Uncategorized", "order": 17, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 12, "missed": 0, "logged": 12}, {"name": "\ud83e\udea5 PM Brush Teeth", "category": "Uncategorized", "order": 18, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1], "done": 3, "missed": 13, "logged": 16}, {"name": "\ud83e\uddf5 Floss + Retainers", "category": "Uncategorized", "order": 19, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 12, "missed": 0, "logged": 12}, {"name": "\ud83d\udc8a PM Supplements", "category": "Uncategorized", "order": 20, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 7, "missed": 0, "logged": 7}, {"name": "\ud83d\udcdd Journal: Reflect & Plan", "category": "Uncategorized", "order": 21, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 5, "missed": 0, "logged": 5}, {"name": "\ud83d\udcd6 Read for 15min", "category": "Uncategorized", "order": 22, "completions": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], "done": 0, "missed": 0, "logged": 0}], "dates": ["2025-11-25", "2025-11-26", "2025-11-27", "2025-11-28", "2025-11-29", "2025-11-30", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-06", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12"]};
+const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", "category": "Uncategorized", "order": 0, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "hours", "target": 7.0, "values": [null]}, {"name": "☀️ 15min In Sunlight", "category": "Uncategorized", "order": 1, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "seconds", "target": 600.0, "values": [null]}, {"name": "🏋️ Burn 500+ kcal", "category": "Uncategorized", "order": 2, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "kcal", "target": 500.0, "values": [null]}, {"name": "💊 AM Supplements + Wash Face", "category": "Uncategorized", "order": 3, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🪥 AM Brush Teeth", "category": "Uncategorized", "order": 4, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "⚖️ Weekly Checkin", "category": "Uncategorized", "order": 5, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🎯 Complete 3 Key Tasks", "category": "Uncategorized", "order": 6, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📥 Process Inboxes 2x 20m", "category": "Uncategorized", "order": 7, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧾 1 Social Media Post", "category": "Uncategorized", "order": 8, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧘‍♂️ Meditate OR Peak", "category": "Uncategorized", "order": 9, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💻 Ship 1 Code Commit", "category": "Uncategorized", "order": 10, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🎧 Deep Work Task 90m", "category": "Uncategorized", "order": 11, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💰 Update Financial Dashboard", "category": "Uncategorized", "order": 12, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🥛 Eat 180g+ Protein", "category": "Uncategorized", "order": 13, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "grams", "target": 180.0, "values": [null]}, {"name": "💧Drink 100oz Water", "category": "Day", "order": 14, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "floz_us", "target": 100.0, "values": [null]}, {"name": "🍽️ Eat <2400 Kcal", "category": "Uncategorized", "order": 15, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "kcal", "target": 2400.0, "values": [null]}, {"name": "📊 Freedom Focus", "category": "Uncategorized", "order": 16, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧼 PM Wash Face", "category": "Uncategorized", "order": 17, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🪥 PM Brush Teeth", "category": "Uncategorized", "order": 18, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧵 Floss + Retainers", "category": "Uncategorized", "order": 19, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💊 PM Supplements", "category": "Uncategorized", "order": 20, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📝 Journal: Reflect & Plan", "category": "Uncategorized", "order": 21, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📖 Read for 15min", "category": "Uncategorized", "order": 22, "completions": [-1], "done": 0, "missed": 0, "logged": 0}]};
 (function(){
   const {habits, dates} = D;
+
+  // Sync badge: show last data date + freshness indicator
+  (function renderSyncBadge() {
+    const badge = document.getElementById('sync-badge');
+    if (!badge || !dates.length) return;
+    const lastDate = dates[dates.length - 1];
+    const last = new Date(lastDate + 'T12:00:00');
+    const now = new Date();
+    const diffDays = Math.floor((now - last) / 86400000);
+    const statusClass = diffDays <= 1 ? 'fresh' : diffDays <= 3 ? 'stale' : 'dead';
+    const formatted = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    badge.innerHTML = '<span class="dot ' + statusClass + '"></span>Last data sync: ' + formatted;
+  })();
 
   function getWeekMonday(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
@@ -407,8 +551,8 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
       weekSet = new Set(weeks.map(w => w.vi));
     }
 
-    // Find experiment start (March 12, 2026) position in visIdx for red line
-    const startIdx = dates.indexOf('2026-03-12');
+    // Find experiment start position in visIdx for red line
+    const startIdx = dates.indexOf('2026-03-23');
     let startVi = -1;
     if (!isWeeklyAvg && visIdx && startIdx >= 0) {
       startVi = visIdx.indexOf(startIdx);
@@ -648,6 +792,185 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   }
 
   render();
+})();
+</script>
+<script>
+// Weekly body transformation data (manually entered)
+const BODY = {
+  weeks: [
+    {
+      label: 'Week 1',
+      date: '2026-03-23',
+      photos: [],
+      weight: null,
+      bodyFat: null,
+      vo2max: null,
+    }
+  ]
+};
+
+// Render weekly carousel
+(function renderCarousel() {
+  const container = document.getElementById('week-carousel');
+  const dotsContainer = document.getElementById('carousel-dots');
+  if (!container || !BODY.weeks.length) return;
+
+  const activeWeeks = BODY.weeks.filter(w => w.weight !== null || w.bodyFat !== null || w.vo2max !== null || w.photos.length > 0);
+  
+  if (activeWeeks.length === 0) {
+    container.innerHTML = '<div class="week-card">' +
+      '<div class="week-title">Week 1 \u2014 Starting Point</div>' +
+      '<div class="photo-grid">' +
+        '<div class="photo-placeholder">Front</div>' +
+        '<div class="photo-placeholder">Side</div>' +
+      '</div>' +
+      '<div class="metrics">' +
+        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">Self-reported</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">Self-reported</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">VO2 Max</div><div class="metric-source">Apple Watch</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+      '</div></div>';
+    return;
+  }
+
+  const week1 = BODY.weeks[0];
+  
+  activeWeeks.forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = 'week-card';
+    
+    const weightDelta = (i > 0 && w.weight && week1.weight) ? w.weight - week1.weight : null;
+    const bfDelta = (i > 0 && w.bodyFat && week1.bodyFat) ? w.bodyFat - week1.bodyFat : null;
+    const vo2Delta = (i > 0 && w.vo2max && week1.vo2max) ? w.vo2max - week1.vo2max : null;
+    
+    function deltaHTML(val, unit, invert) {
+      if (val === null) return '';
+      const sign = val > 0 ? '+' : '';
+      const cls = val === 0 ? 'neutral' : (invert ? (val < 0 ? 'positive' : 'negative') : (val > 0 ? 'positive' : 'negative'));
+      return '<span class="metric-delta ' + cls + '">' + sign + val.toFixed(1) + unit + '</span>';
+    }
+    
+    function sparklineSVG(metric, upToIndex) {
+      const values = BODY.weeks.slice(0, upToIndex + 1).map(wk => wk[metric]).filter(v => v !== null);
+      if (values.length < 2) return '';
+      const min = Math.min(...values); const max = Math.max(...values);
+      const range = max - min || 1;
+      const w = 60; const h = 24;
+      const points = values.map((v, j) => {
+        const x = (j / (values.length - 1)) * w;
+        const y = h - ((v - min) / range) * h;
+        return x + ',' + y;
+      }).join(' ');
+      return '<div class="sparkline"><svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+        '<polyline points="' + points + '" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg></div>';
+    }
+
+    let photosHTML = '';
+    if (w.photos.length > 0) {
+      photosHTML = '<div class="photo-grid">' + w.photos.map(p => '<img src="' + p + '" alt="Week ' + (i+1) + ' progress photo" loading="lazy">').join('') + '</div>';
+    } else {
+      photosHTML = '<div class="photo-grid"><div class="photo-placeholder">Front</div><div class="photo-placeholder">Side</div></div>';
+    }
+
+    const weekIdx = BODY.weeks.indexOf(w);
+    
+    card.innerHTML = '<div class="week-title">' + w.label + ' \u2014 ' + w.date + '</div>' +
+      photosHTML +
+      '<div class="metrics">' +
+        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">Self-reported</div></div><div style="display:flex;align-items:baseline">' + (w.weight ? '<span class="metric-value">' + w.weight + '</span><span class="chart-unit"> lbs</span>' + deltaHTML(weightDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('weight', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">Self-reported</div></div><div style="display:flex;align-items:baseline">' + (w.bodyFat ? '<span class="metric-value">' + w.bodyFat + '</span><span class="chart-unit">%</span>' + deltaHTML(bfDelta, '%', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bodyFat', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">VO2 Max</div><div class="metric-source">Apple Watch</div></div><div style="display:flex;align-items:baseline">' + (w.vo2max ? '<span class="metric-value">' + w.vo2max + '</span><span class="chart-unit"> mL/kg/min</span>' + deltaHTML(vo2Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('vo2max', weekIdx) + '</div></div>' +
+      '</div>';
+    
+    container.appendChild(card);
+  });
+
+  if (activeWeeks.length > 1) {
+    activeWeeks.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dotsContainer.appendChild(dot);
+    });
+    
+    container.addEventListener('scroll', () => {
+      const scrollLeft = container.scrollLeft;
+      const cardWidth = container.firstElementChild.offsetWidth + 12;
+      const activeIdx = Math.round(scrollLeft / cardWidth);
+      dotsContainer.querySelectorAll('.dot').forEach((d, i) => {
+        d.classList.toggle('active', i === activeIdx);
+      });
+    });
+  }
+})();
+
+// Render trend charts
+(function renderTrends() {
+  const container = document.getElementById('trends-section');
+  if (!container) return;
+
+  const metrics = [
+    { key: 'weight', title: 'Weight', unit: 'lbs', color: 'var(--green)' },
+    { key: 'bodyFat', title: 'Body Fat', unit: '%', color: 'var(--yellow)' },
+    { key: 'vo2max', title: 'VO2 Max', unit: 'mL/kg/min', color: '#58a6ff' }
+  ];
+
+  metrics.forEach(m => {
+    const values = BODY.weeks.map(w => ({ date: w.date, value: w[m.key] })).filter(d => d.value !== null);
+    
+    const chart = document.createElement('div');
+    chart.className = 'trend-chart';
+    
+    if (values.length === 0) {
+      chart.innerHTML = '<div class="chart-title">' + m.title + '</div>' +
+        '<div class="chart-value" style="color:var(--text-muted)">\u2014</div>' +
+        '<div class="chart-unit">No data yet</div>';
+      container.appendChild(chart);
+      return;
+    }
+
+    const latest = values[values.length - 1];
+    
+    let svgHTML = '';
+    if (values.length >= 2) {
+      const min = Math.min(...values.map(v => v.value));
+      const max = Math.max(...values.map(v => v.value));
+      const range = max - min || 1;
+      const padding = range * 0.1;
+      const w = 300; const h = 80;
+      
+      const points = values.map((v, i) => {
+        const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
+        const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      });
+      
+      const areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
+      
+      svgHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="grad-' + m.key + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + m.color + '" stop-opacity="0.2"/>' +
+        '<stop offset="100%" stop-color="' + m.color + '" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        '<polygon points="' + areaPoints + '" fill="url(#grad-' + m.key + ')"/>' +
+        '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + m.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+        values.map((v, i) => {
+          const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
+          const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
+          return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="' + m.color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+        }).join('') +
+        '</svg>';
+    }
+
+    chart.innerHTML = '<div class="chart-title">' + m.title + '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:6px">' +
+        '<span class="chart-value">' + latest.value + '</span>' +
+        '<span class="chart-unit">' + m.unit + '</span>' +
+      '</div>' +
+      svgHTML +
+      (values.length >= 2 ? '<div class="chart-labels"><span>' + values[0].date + '</span><span>' + latest.date + '</span></div>' : '');
+    
+    container.appendChild(chart);
+  });
 })();
 </script>
 </body></html>
