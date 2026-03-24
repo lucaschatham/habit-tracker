@@ -1168,22 +1168,38 @@ const BODY = {
 </script>
 <div style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
   <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Personal Bests</h2>
-  <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Strength benchmarks. Updated as PRs are hit.</p>
+  <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Quarterly assessment benchmarks. Tested and tracked over time.</p>
 </div>
 <div id="pbs-section" style="padding: 8px 16px 32px;"></div>
 <script>
 (function renderPBs() {
   const pbs = [
-    { title: 'DB Flat Bench (1RM)', unit: 'lbs', color: '#F97316',
+    { title: '3RM Bench Press', desc: 'Barbell flat bench, 3 rep max', unit: 'lbs', color: '#F97316',
+      entries: [{ date: '2026-03-04', value: 245 }] },
+    { title: '3RM DB Bench Press', desc: 'Dumbbell flat bench, 3 rep max each hand', unit: 'lbs ea', color: '#F59E0B',
+      entries: [{ date: '2026-03-04', value: 100 }] },
+    { title: 'DB Flat Bench (1RM)', desc: 'Dumbbell flat bench, 1 rep max each hand', unit: 'lbs', color: '#D97706',
       entries: [{ date: '2026-03-23', value: 120 }] },
-    { title: 'Pull-ups', unit: 'reps', color: '#06B6D4',
-      entries: [{ date: '2026-03-23', value: 14 }] },
-    { title: 'Push-ups (60s)', unit: 'reps', color: '#2EE05A',
-      entries: [{ date: '2026-03-23', value: 37 }] },
-    { title: 'Standing DB Press (each)', unit: 'lbs', color: '#8B5CF6',
+    { title: 'Standing DB Press (each)', desc: 'Standing dumbbell overhead press, one arm at a time', unit: 'lbs', color: '#8B5CF6',
       entries: [{ date: '2026-03-23', value: 70 }] },
-    { title: 'Dips (@ BW)', unit: 'reps', color: '#EC4899',
+    { title: 'Pull-ups', desc: 'Overhand grip, dead hang, chin over bar, no kip', unit: 'reps', color: '#06B6D4',
+      entries: [{ date: '2026-03-04', value: 20 }, { date: '2026-03-23', value: 14 }] },
+    { title: 'Push-ups (60s)', desc: 'Max push-ups in 60 seconds, chest to floor', unit: 'reps', color: '#2EE05A',
+      entries: [{ date: '2026-03-04', value: 50 }, { date: '2026-03-23', value: 37 }] },
+    { title: 'Dips (@ BW)', desc: 'Parallel bar dips at bodyweight, full lockout', unit: 'reps', color: '#EC4899',
       entries: [{ date: '2026-03-23', value: 15 }] },
+    { title: 'Vertical Jump', desc: 'Standing vertical leap, feet together, no step', unit: 'inches', color: '#60A5FA',
+      entries: [{ date: '2026-03-04', value: 25.5 }] },
+    { title: "Farmer's Carry (BW)", desc: 'Carry bodyweight total (split across hands), max time', unit: 'sec', color: '#14B8A6',
+      entries: [{ date: '2026-03-04', value: 55 }] },
+    { title: 'Dead Hang', desc: 'Passive hang from pull-up bar, overhand grip, max time', unit: 'sec', color: '#0891B2',
+      entries: [{ date: '2026-03-04', value: 98 }] },
+    { title: 'Reaction Time', desc: 'Visual stimulus reaction test, lower is better', unit: 'ms', color: '#A855F7',
+      entries: [{ date: '2026-03-04', value: 302 }] },
+    { title: 'Single Leg Balance R (eyes closed)', desc: 'Stand on right leg, eyes closed, max time', unit: 'sec', color: '#F43F5E',
+      entries: [{ date: '2026-03-04', value: 31 }] },
+    { title: 'Single Leg Balance L (eyes closed)', desc: 'Stand on left leg, eyes closed, max time', unit: 'sec', color: '#E11D48',
+      entries: [{ date: '2026-03-04', value: 33 }] },
   ];
   const container = document.getElementById('pbs-section');
   if (!container) return;
@@ -1232,13 +1248,18 @@ const BODY = {
         '</svg>';
     }
 
+    function fmtDate(d) {
+      var dt = new Date(d + 'T12:00:00');
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
     chart.innerHTML = '<div class="chart-title">' + pb.title + '</div>' +
-      '<div style="display:flex;align-items:baseline;gap:6px">' +
+      (pb.desc ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + pb.desc + '</div>' : '') +
+      '<div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">' +
         '<span class="chart-value">' + latest.value + '</span>' +
         '<span class="chart-unit">' + pb.unit + '</span>' +
       '</div>' +
       svgHTML +
-      '<div class="chart-labels">' + values.map(v => '<span>' + v.date.slice(5) + '</span>').join('') + '</div>';
+      '<div class="chart-labels">' + values.map(v => '<span>' + fmtDate(v.date) + '</span>').join('') + '</div>';
 
     container.appendChild(chart);
   });
