@@ -44,3 +44,7 @@ sync-stderr.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.gstack/
+.claude/
+latest.streaks
+*.streaks
