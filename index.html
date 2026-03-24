@@ -387,9 +387,12 @@
   @media (max-width: 640px) {
     .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .stats-bar .stat-card:last-child { grid-column: 1 / -1; }
-    .pinned-grid { grid-template-columns: 1fr; }
-    .identity-bar { gap: 12px; }
-    .identity-avatar { width: 44px; height: 44px; font-size: 16px; }
+    .pinned-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .pinned-card { padding: 8px 8px; }
+    .identity-bar { gap: 10px; padding-top: 12px; }
+    .identity-avatar { width: 40px; height: 40px; font-size: 15px; }
+    .identity-text h2 { display: none; }
+    .identity-text .identity-role { font-size: 12px; font-weight: 600; color: var(--text); }
   }
 
   @media (max-width: 480px) {
@@ -410,13 +413,16 @@
     .week-card { flex: 0 0 90vw; padding: 16px; }
     .week-card .metric-value { font-size: 20px; }
     .trend-chart .chart-value { font-size: 24px; }
-    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-value { font-size: 20px; }
     .stat-card .stat-label { font-size: 9px; }
-    .stat-card { padding: 10px 8px; }
-    .sync-bar { margin: 10px 12px 0; padding: 8px 12px; }
-    .identity-bar { padding: 16px 12px 0; }
-    .pinned-section { padding: 10px 12px 0; }
-    .how-to-read { margin: 10px 12px 0; }
+    .stat-card { padding: 8px 6px; border-radius: 8px; }
+    .stats-bar { gap: 6px; padding: 8px 12px 0; }
+    .sync-bar { margin: 8px 12px 0; padding: 6px 10px; font-size: 11px; }
+    .identity-bar { padding: 10px 12px 0; }
+    .pinned-section { padding: 8px 12px 0; }
+    .pinned-card .pin-value { font-size: 16px; }
+    .pinned-card .pin-title { font-size: 9px; margin-bottom: 2px; }
+    .how-to-read { margin: 8px 12px 0; }
   }
 </style>
 </head>
@@ -676,16 +682,21 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const twStartDay = new Date(dates[thisWeekStart] + 'T12:00:00');
   const twEndDay = new Date(dates[todayIdx] + 'T12:00:00');
-  const partialNote = twDays < 4 ? '(' + dayNames[twStartDay.getDay()] + '-' + dayNames[twEndDay.getDay()] + ')' : '';
+  const partialNote = twDays < 4 ? (twDays === 1 ? '(' + dayNames[twStartDay.getDay()] + ' only)' : '(' + dayNames[twStartDay.getDay()] + '-' + dayNames[twEndDay.getDay()] + ')') : '';
+
+  // Check if any habit has actual completion data (not all -1)
+  const hasRealData = habits.some(h => h.completions.some(c => c !== -1));
 
   // Render stats bar
   const statsBar = document.getElementById('stats-bar');
+  const dash = '<div class="stat-value" style="color:var(--text-muted)">&mdash;</div>';
+  const dayLabel = dates.length === 1 ? '1 day' : dates.length + ' days';
   statsBar.innerHTML =
-    '<div class="stat-card"><div class="stat-value" style="color:'+pc(overallPct)+'">'+overallPct+'%</div><div class="stat-label">Overall Adherence</div><div class="stat-note">'+dates.length+' days</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:'+pc(healthPct)+'">'+healthPct+'%</div><div class="stat-label">Health Protocols</div><div class="stat-note">'+healthH.length+' habits</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:'+pc(bizPct)+'">'+bizPct+'%</div><div class="stat-label">Business Output</div><div class="stat-note">'+bizH.length+' habits</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:'+pc(thisWeekPct)+'">'+thisWeekPct+'%</div><div class="stat-label">This Week</div><div class="stat-note">'+twDays+' day'+(twDays>1?'s':'')+'</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:'+(trendDelta>0?'var(--green)':trendDelta<0?'var(--red)':'var(--text-muted)')+'">'+trendStr+'</div><div class="stat-label">vs Last Week</div>'+(partialNote?'<div class="stat-note">'+partialNote+'</div>':'')+'</div>';
+    '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(overallPct)+'">'+overallPct+'%</div>' : dash) + '<div class="stat-label">Overall Adherence</div><div class="stat-note">'+dayLabel+'</div></div>' +
+    '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(healthPct)+'">'+healthPct+'%</div>' : dash) + '<div class="stat-label">Health Protocols</div><div class="stat-note">'+healthH.length+' habits</div></div>' +
+    '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(bizPct)+'">'+bizPct+'%</div>' : dash) + '<div class="stat-label">Business Output</div><div class="stat-note">'+bizH.length+' habits</div></div>' +
+    '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(thisWeekPct)+'">'+thisWeekPct+'%</div>' : dash) + '<div class="stat-label">This Week</div><div class="stat-note">'+twDays+' day'+(twDays>1?'s':'')+'</div></div>' +
+    '<div class="stat-card">' + (hasRealData && lwTotal > 0 ? '<div class="stat-value" style="color:'+(trendDelta>0?'var(--green)':trendDelta<0?'var(--red)':'var(--text-muted)')+'">'+trendStr+'</div>' : dash) + '<div class="stat-label">vs Last Week</div>'+(partialNote?'<div class="stat-note">'+partialNote+'</div>':'')+'</div>';
 
   // Pinned highlights: render after BODY data is available
   // Expose streak data globally for the deferred pinned render
@@ -1270,10 +1281,10 @@ const BODY = {
   });
   const slot1 = bestStreak > 0
     ? '<div class="pin-value" style="color:var(--green)">' + bestStreak + ' days</div><div class="pin-detail">' + bestStreakName + '</div>'
-    : '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started ' + dates[0] + '</div>';
+    : '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Building streaks...</div>';
 
   // Slot 2: Body composition
-  let slot2 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started</div>';
+  let slot2 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Awaiting data</div>';
   if (typeof BODY !== 'undefined' && BODY.weeks && BODY.weeks.length > 0) {
     const latest = BODY.weeks[BODY.weeks.length - 1];
     const first = BODY.weeks[0];
@@ -1286,7 +1297,7 @@ const BODY = {
   }
 
   // Slot 3: Key biomarker trend
-  let slot3 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started</div>';
+  let slot3 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Awaiting data</div>';
   if (typeof BODY !== 'undefined' && BODY.weeks && BODY.weeks.length >= 2) {
     const bioKeys = [
       {key:'vo2max', label:'VO2 Max', unit:'mL/kg/min'},
