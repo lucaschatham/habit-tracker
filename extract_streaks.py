@@ -2,11 +2,13 @@ import json, re
 from datetime import datetime, timedelta
 from collections import Counter
 
-BACKUP_PATH = "/sessions/cool-pensive-fermat/mnt/habits.lucaschatham.com/latest.streaks"
-OUTPUT_PATH = "/sessions/cool-pensive-fermat/mnt/habits.lucaschatham.com/streaks-data.json"
+import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKUP_PATH = os.path.join(SCRIPT_DIR, "latest.streaks")
+OUTPUT_PATH = os.path.join(SCRIPT_DIR, "streaks-data.json")
 
 START = datetime(2026, 3, 23)
-END = datetime(2026, 3, 22)
+END = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 dates = []
 d = START
 while d <= END:
