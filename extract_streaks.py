@@ -8,7 +8,7 @@ BACKUP_PATH = os.path.join(SCRIPT_DIR, "latest.streaks")
 OUTPUT_PATH = os.path.join(SCRIPT_DIR, "streaks-data.json")
 
 START = datetime(2026, 3, 23)
-END = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+END = datetime(2026, 3, 23)
 dates = []
 d = START
 while d <= END:
