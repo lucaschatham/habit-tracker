@@ -316,16 +316,17 @@
 
   /* Enhanced sync bar */
   .sync-bar {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
     padding: 10px 16px; margin: 12px 16px 0;
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-    font-size: 12px; color: var(--text-muted);
+    font-size: 12px; color: var(--text-muted); text-align: center;
   }
+  .sync-bar .sync-info { display: flex; align-items: center; gap: 8px; }
   .sync-bar .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .sync-bar .dot.fresh { background: var(--green); }
   .sync-bar .dot.stale { background: var(--yellow); }
   .sync-bar .dot.dead { background: var(--red); }
-  .sync-bar a { color: var(--text-muted); text-decoration: underline; margin-left: auto; cursor: pointer; }
+  .sync-bar a { color: var(--text); font-weight: 600; text-decoration: underline; cursor: pointer; display: block; width: 100%; text-align: center; margin-top: 2px; }
 
   /* Stats bar */
   .stats-bar {
@@ -515,11 +516,11 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
     const diffHours = (now - last) / 3600000;
     const statusClass = diffHours <= 26 ? 'fresh' : diffHours <= 72 ? 'stale' : 'dead';
     const formatted = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    bar.innerHTML = '<span class="dot ' + statusClass + '"></span>' +
+    bar.innerHTML = '<span class="sync-info"><span class="dot ' + statusClass + '"></span>' +
       'Last synced: ' + formatted +
       ' &middot; ' + habits.length + ' habits tracked' +
-      ' &middot; Day ' + dates.length +
-      '<a onclick="document.querySelector(\'.how-to-read\').open=true;document.querySelector(\'.how-to-read\').scrollIntoView({behavior:\'smooth\'})">How this works</a>';
+      ' &middot; Day ' + dates.length + '</span>' +
+      '<a onclick="document.querySelector(\'.how-to-read\').open=true;document.querySelector(\'.how-to-read\').scrollIntoView({behavior:\'smooth\'})">How this works &#x25BE;</a>';
   })();
 
   // Daybreaker protocol domains
