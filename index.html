@@ -1084,43 +1084,39 @@ const BODY = {
 })();
 
 // Shared chart renderer: full-width, newest LEFT, oldest RIGHT
-// Returns full HTML block (svg + labels)
+// SVG for line/dots/gradient only. HTML for all text labels.
 function renderCompactChart(vals, color, gradId) {
-  // Reverse: newest first (left side)
   var rv = vals.slice().reverse();
   if (rv.length < 2) return '';
 
   var min = Math.min.apply(null, rv.map(function(v){return v.value}));
   var max = Math.max.apply(null, rv.map(function(v){return v.value}));
   var range = max - min || 1;
-  var pad = range * 0.15;
+  var pad = range * 0.2;
   var yMin = min - pad;
   var yMax = max + pad;
   var yRange = yMax - yMin;
-
-  // Layout: full width, 80px tall chart area, 8px left/right margin
-  var mx = 8, h = 80, chartW = 'calc(100% - 16px)';
-  // Use viewBox percentage-based: 0-100 x-axis
+  var h = 100;
   var vw = 100, vh = h;
 
   var pts = rv.map(function(v, i) {
-    var x = rv.length === 1 ? vw / 2 : (i / (rv.length - 1)) * vw;
-    var y = vh - ((v.value - yMin) / yRange) * vh;
-    return {x: x, y: y, val: v.value, date: v.date};
+    var xPct = rv.length === 1 ? 50 : (i / (rv.length - 1)) * 100;
+    var yPct = ((v.value - yMin) / yRange) * 100;
+    var ySvg = vh - (yPct / 100) * vh;
+    return {xPct: xPct, yPct: yPct, ySvg: ySvg, xSvg: xPct, val: v.value, date: v.date};
   });
 
-  var polyPts = pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
-  var areaPts = polyPts + ' ' + pts[pts.length-1].x.toFixed(1) + ',' + vh + ' ' + pts[0].x.toFixed(1) + ',' + vh;
+  var polyPts = pts.map(function(p){return p.xSvg.toFixed(1)+','+p.ySvg.toFixed(1)}).join(' ');
+  var areaPts = polyPts + ' ' + pts[pts.length-1].xSvg.toFixed(1) + ',' + vh + ' ' + pts[0].xSvg.toFixed(1) + ',' + vh;
 
-  // Grid lines (2-3 horizontal)
+  // Horizontal grid lines
   var gridLines = '';
-  var gridCount = 3;
-  for (var g = 0; g <= gridCount; g++) {
-    var gy = (g / gridCount) * vh;
+  for (var g = 1; g < 4; g++) {
+    var gy = (g / 4) * vh;
     gridLines += '<line x1="0" y1="' + gy.toFixed(1) + '" x2="' + vw + '" y2="' + gy.toFixed(1) + '" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2,4"/>';
   }
 
-  var svg = '<svg viewBox="0 0 ' + vw + ' ' + vh + '" preserveAspectRatio="none" style="width:100%;height:' + h + 'px;display:block;margin-top:12px">' +
+  var svg = '<svg viewBox="0 0 ' + vw + ' ' + vh + '" preserveAspectRatio="none" style="width:100%;height:' + h + 'px;display:block">' +
     '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.15"/>' +
     '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
@@ -1129,27 +1125,32 @@ function renderCompactChart(vals, color, gradId) {
     '<polygon points="' + areaPts + '" fill="url(#' + gradId + ')"/>' +
     '<polyline points="' + polyPts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
     pts.map(function(p) {
-      var labelY = p.y - 8;
-      if (labelY < 10) labelY = p.y + 14;
-      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>' +
-        '<text x="' + p.x.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="var(--text)" font-size="4" font-weight="700" style="font-family:-apple-system,sans-serif" vector-effect="non-scaling-stroke">' + p.val + '</text>';
+      return '<circle cx="' + p.xSvg.toFixed(1) + '" cy="' + p.ySvg.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
     }).join('') +
     '</svg>';
 
-  // X-axis date labels
-  var labels = '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:4px">';
+  // HTML value labels positioned above dots using percentage left
+  var valueLabels = '';
   pts.forEach(function(p) {
-    labels += '<span>' + fmtDateLabel(p.date) + '</span>';
+    var topPct = 100 - p.yPct;
+    valueLabels += '<span style="position:absolute;left:' + p.xPct.toFixed(1) + '%;top:calc(' + topPct.toFixed(1) + '% - 20px);transform:translateX(-50%);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap">' + p.val + '</span>';
   });
-  labels += '</div>';
 
-  // Y-axis value labels (min/max on right side)
-  var yLabels = '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);position:relative;height:0">' +
-    '<span style="position:absolute;right:0;top:-' + (h + 10) + 'px">' + Math.round(max) + '</span>' +
-    '<span style="position:absolute;right:0;bottom:18px">' + Math.round(min) + '</span>' +
-    '</div>';
+  // X-axis date labels
+  var dateLabels = '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:6px">';
+  pts.forEach(function(p) {
+    dateLabels += '<span>' + fmtDateLabel(p.date) + '</span>';
+  });
+  dateLabels += '</div>';
 
-  return svg + labels;
+  // Wrap chart in relative container so HTML labels overlay correctly
+  var html = '<div style="position:relative;margin-top:12px;padding-top:20px">' +
+    valueLabels +
+    '<div>' + svg + '</div>' +
+    '</div>' +
+    dateLabels;
+
+  return html;
 }
 
 function fmtDateLabel(d) {
