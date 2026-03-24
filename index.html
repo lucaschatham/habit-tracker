@@ -1100,12 +1100,51 @@ const BODY = {
     { key: 'fev1', title: 'FEV1', unit: 'L', color: '#14B8A6' }
   ];
 
+  // Shared compact chart renderer: newest LEFT, oldest RIGHT
+  function renderCompactChart(vals, color, gradId) {
+    // Reverse: newest first (left side)
+    var rv = vals.slice().reverse();
+    if (rv.length < 2) return '';
+    var min = Math.min.apply(null, rv.map(function(v){return v.value}));
+    var max = Math.max.apply(null, rv.map(function(v){return v.value}));
+    var range = max - min || 1;
+    var pad = range * 0.1;
+    var sp = 60; // fixed px spacing between points
+    var w = sp * (rv.length - 1) + 20; // compact width
+    var h = 80;
+
+    var pts = rv.map(function(v, i) {
+      var x = 10 + i * sp;
+      var y = h - ((v.value - (min - pad)) / (range + pad * 2)) * h;
+      return {x: x, y: y};
+    });
+
+    var polyPts = pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
+    var areaPts = polyPts + ' ' + (10 + (rv.length-1)*sp) + ',' + h + ' 10,' + h;
+
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
+      '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.2"/>' +
+      '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<polygon points="' + areaPts + '" fill="url(#' + gradId + ')"/>' +
+      '<polyline points="' + polyPts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      pts.map(function(p) {
+        return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5"/>';
+      }).join('') +
+      '</svg>';
+  }
+
+  function fmtDateLabel(d) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
   metrics.forEach(m => {
     const values = BODY.weeks.map(w => ({ date: w.date, value: w[m.key] })).filter(d => d.value !== null);
-    
+
     const chart = document.createElement('div');
     chart.className = 'trend-chart';
-    
+
     if (values.length === 0) {
       chart.innerHTML = '<div class="chart-title">' + m.title + '</div>' +
         '<div class="chart-value" style="color:var(--text-muted)">\u2014</div>' +
@@ -1115,44 +1154,9 @@ const BODY = {
     }
 
     const latest = values[values.length - 1];
-    
-    let svgHTML = '';
-    if (values.length >= 2) {
-      const min = Math.min(...values.map(v => v.value));
-      const max = Math.max(...values.map(v => v.value));
-      const range = max - min || 1;
-      const padding = range * 0.1;
-      const w = 300; const h = 80;
-      
-      const points = values.map((v, i) => {
-        const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
-        const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
-        return x.toFixed(1) + ',' + y.toFixed(1);
-      });
-      
-      const areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
-      
-      // Week marker lines
-      const weekLines = values.map((v, i) => {
-        const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
-        return '<line x1="' + x.toFixed(1) + '" y1="0" x2="' + x.toFixed(1) + '" y2="' + h + '" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>';
-      }).join('');
-
-      svgHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
-        '<defs><linearGradient id="grad-' + m.key + '" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="' + m.color + '" stop-opacity="0.2"/>' +
-        '<stop offset="100%" stop-color="' + m.color + '" stop-opacity="0"/>' +
-        '</linearGradient></defs>' +
-        weekLines +
-        '<polygon points="' + areaPoints + '" fill="url(#grad-' + m.key + ')"/>' +
-        '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + m.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
-        values.map((v, i) => {
-          const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
-          const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
-          return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="' + m.color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
-        }).join('') +
-        '</svg>';
-    }
+    const svgHTML = renderCompactChart(values, m.color, 'grad-' + m.key);
+    // Labels: newest first (reversed)
+    const revLabels = values.slice().reverse();
 
     chart.innerHTML = '<div class="chart-title">' + m.title + '</div>' +
       '<div style="display:flex;align-items:baseline;gap:6px">' +
@@ -1160,8 +1164,8 @@ const BODY = {
         '<span class="chart-unit">' + m.unit + '</span>' +
       '</div>' +
       svgHTML +
-      (values.length >= 1 ? '<div class="chart-labels">' + values.map((v, i) => '<span>W' + (i + 1) + '</span>').join('') + '</div>' : '');
-    
+      (values.length >= 1 ? '<div class="chart-labels" style="display:flex;gap:' + (values.length > 1 ? '40' : '0') + 'px;padding-left:2px">' + revLabels.map(function(v){ return '<span>' + fmtDateLabel(v.date) + '</span>' }).join('') + '</div>' : '');
+
     container.appendChild(chart);
   });
 })();
@@ -1210,48 +1214,10 @@ const BODY = {
     chart.className = 'trend-chart';
 
     const latest = values[values.length - 1];
+    const gradId = 'grad-pb-' + pb.title.replace(/[^a-z0-9]/gi, '');
+    const svgHTML = renderCompactChart(values, pb.color, gradId);
+    const revLabels = values.slice().reverse();
 
-    let svgHTML = '';
-    if (values.length >= 2) {
-      const min = Math.min(...values.map(v => v.value));
-      const max = Math.max(...values.map(v => v.value));
-      const range = max - min || 1;
-      const padding = range * 0.1;
-      const w = 300, h = 80;
-
-      const points = values.map((v, i) => {
-        const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
-        const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
-        return x.toFixed(1) + ',' + y.toFixed(1);
-      });
-
-      const areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
-
-      const weekLines = values.map((v, i) => {
-        const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
-        return '<line x1="' + x.toFixed(1) + '" y1="0" x2="' + x.toFixed(1) + '" y2="' + h + '" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>';
-      }).join('');
-
-      svgHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
-        '<defs><linearGradient id="grad-pb-' + pb.title.replace(/[^a-z0-9]/gi, '') + '" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="' + pb.color + '" stop-opacity="0.2"/>' +
-        '<stop offset="100%" stop-color="' + pb.color + '" stop-opacity="0"/>' +
-        '</linearGradient></defs>' +
-        weekLines +
-        '<polygon points="' + areaPoints + '" fill="url(#grad-pb-' + pb.title.replace(/[^a-z0-9]/gi, '') + ')"/>' +
-        '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + pb.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
-        values.map((v, i) => {
-          const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
-          const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
-          return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="' + pb.color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
-        }).join('') +
-        '</svg>';
-    }
-
-    function fmtDate(d) {
-      var dt = new Date(d + 'T12:00:00');
-      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
     chart.innerHTML = '<div class="chart-title">' + pb.title + '</div>' +
       (pb.desc ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + pb.desc + '</div>' : '') +
       '<div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">' +
@@ -1259,7 +1225,7 @@ const BODY = {
         '<span class="chart-unit">' + pb.unit + '</span>' +
       '</div>' +
       svgHTML +
-      '<div class="chart-labels">' + values.map(v => '<span>' + fmtDate(v.date) + '</span>').join('') + '</div>';
+      '<div class="chart-labels" style="display:flex;gap:' + (values.length > 1 ? '40' : '0') + 'px;padding-left:2px">' + revLabels.map(function(v){ return '<span>' + fmtDateLabel(v.date) + '</span>' }).join('') + '</div>';
 
     container.appendChild(chart);
   });
