@@ -30,7 +30,8 @@
   }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
   .header .sub { color: var(--text-muted); font-size: 13px; margin-top: 6px; line-height: 1.5; max-width: 480px; }
-  .sync-badge { display: inline-block; font-size: 13px; color: var(--text-muted); margin-top: 8px; letter-spacing: 0.3px; line-height: 1.5; }
+  .sync-badge { display: inline-block; font-size: 12px; color: var(--text-muted); margin-top: 8px; letter-spacing: 0.3px; line-height: 1.5; }
+  .color-key { font-size: 11px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.2px; }
   .sync-badge .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
   .sync-badge .dot.fresh { background: var(--green); }
   .sync-badge .dot.stale { background: var(--yellow); }
@@ -112,7 +113,16 @@
     font-size: 10px; color: var(--text-muted); text-align: right;
     padding: 0 6px 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums;
     position: sticky; left: 0; background: var(--bg); z-index: 9;
+    border-left: 3px solid transparent;
   }
+
+  .domain-leg {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px;
+    padding: 10px 0 0; font-size: 10px; color: var(--text-muted);
+  }
+  .domain-leg .dl { display: flex; align-items: center; gap: 4px; }
+  .domain-leg .db { width: 3px; height: 10px; border-radius: 1px; }
+  .tt .tt-domain { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .sq, .num {
     min-width: 30px; height: 14px; border-radius: 3px;
@@ -158,7 +168,7 @@
   td.c { padding: 0; }
 
 
-.jump-nav { display: flex; gap: 6px; margin-top: 8px; }
+.jump-nav { display: flex; gap: 6px; margin-top: 10px; padding-bottom: 2px; }
 .jump-nav button {
   background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
   border-radius: 20px; font-size: 11px; font-weight: 600; padding: 4px 14px;
@@ -188,7 +198,7 @@
 }
 
 .week-card .photo-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;
 }
 .week-card .photo-grid img {
   width: 100%; aspect-ratio: 3/4; object-fit: cover;
@@ -228,6 +238,23 @@
 
 .week-card .sparkline { margin-left: auto; }
 .week-card .sparkline svg { display: block; }
+
+.carousel-nav {
+  display: flex; align-items: center; gap: 0; position: relative;
+}
+.carousel-nav .week-carousel { flex: 1; }
+.carousel-arrow {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; z-index: 2; margin: 0 4px;
+}
+.carousel-arrow:hover { color: var(--text); border-color: var(--text-muted); }
+.carousel-arrow:disabled { opacity: 0.2; cursor: default; }
+@media (max-width: 480px) {
+  .carousel-arrow { width: 28px; height: 28px; font-size: 14px; margin: 0 2px; }
+}
 
 .carousel-dots {
   display: flex; justify-content: center; gap: 6px;
@@ -284,36 +311,36 @@
 <body>
 <div class="header">
   <h1>Lucas Chatham</h1>
+  <div class="sub" style="margin-top:4px;">Public accountability. Raw data from <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a>, synced daily. No edits, no filtering.</div>
+  <div class="sync-badge" id="sync-badge"></div>
+  <div class="color-key"><span style="color:var(--green)">&#9679;</span> Hit target <span style="color:var(--yellow)">&#9679;</span> Close <span style="color:var(--red)">&#9679;</span> Missed <span style="color:var(--text-muted)">&#9679;</span> No data</div>
+  <div class="domain-leg" id="domain-leg"></div>
   <div class="jump-nav">
     <button onclick="document.getElementById('habits-section').scrollIntoView({behavior:'smooth'})">Habits</button>
     <button onclick="document.getElementById('body-section').scrollIntoView({behavior:'smooth'})">Body</button>
   </div>
-  <div class="sub">A public experiment in accountability. I track daily habits in <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a> on my iPhone. Every morning, the raw data is pulled from Streaks via iCloud, this page is updated, and pushed live. No manual edits, no filtering. <span style="color:var(--green)">Green</span> = hit target. <span style="color:var(--yellow)">Yellow</span> = close, but either fell short or overshot the goal. <span style="color:var(--red)">Red</span> = missed.</div>
-  <div class="sync-badge" id="sync-badge"></div>
 </div>
 <div id="habits-section">
 <div class="cards" id="cards"></div>
 <div class="fb" id="fb"></div>
 <div class="hm-wrap" id="hm"></div>
-<div class="leg">
-  <span class="lc" style="background:var(--green)"></span><span>Hit target</span>
-  <span class="lc" style="background:var(--yellow)"></span><span>Close</span>
-  <span class="lc" style="background:var(--red)"></span><span>Missed</span>
-  <span class="lc" style="background:#13161b"></span><span>No data</span>
-</div>
 </div>
 <div id="body-section" style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
-  <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Body Transformation</h2>
+  <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Weekly Check-in</h2>
   <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Weekly snapshots. Swipe to browse weeks.</p>
 </div>
-<div class="week-carousel" id="week-carousel"></div>
+<div class="carousel-nav">
+  <button class="carousel-arrow" id="carousel-prev" aria-label="Previous week">&#8249;</button>
+  <div class="week-carousel" id="week-carousel"></div>
+  <button class="carousel-arrow" id="carousel-next" aria-label="Next week">&#8250;</button>
+</div>
 <div class="carousel-dots" id="carousel-dots"></div>
 <div style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
   <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Trends</h2>
   <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Key metrics over time.</p>
 </div>
 <div id="trends-section" style="padding: 8px 16px 32px;"></div>
-<div class="tt" id="tt"><div class="th"></div><div class="td"></div><div class="tv"></div><div class="ts"></div></div>
+<div class="tt" id="tt"><div class="th"></div><div class="tt-domain"></div><div class="td"></div><div class="tv"></div><div class="ts"></div></div>
 <script>
 const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", "category": "Uncategorized", "order": 0, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "hours", "target": 7.0, "values": [null]}, {"name": "☀️ 15min In Sunlight", "category": "Uncategorized", "order": 1, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "seconds", "target": 600.0, "values": [null]}, {"name": "🏋️ Burn 500+ kcal", "category": "Uncategorized", "order": 2, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "kcal", "target": 500.0, "values": [null]}, {"name": "💊 AM Supplements + Wash Face", "category": "Uncategorized", "order": 3, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🪥 AM Brush Teeth", "category": "Uncategorized", "order": 4, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "⚖️ Weekly Checkin", "category": "Uncategorized", "order": 5, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🎯 Complete 3 Key Tasks", "category": "Uncategorized", "order": 6, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📥 Process Inboxes 2x 20m", "category": "Uncategorized", "order": 7, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧾 1 Social Media Post", "category": "Uncategorized", "order": 8, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧘‍♂️ Meditate OR Peak", "category": "Uncategorized", "order": 9, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💻 Ship 1 Code Commit", "category": "Uncategorized", "order": 10, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🎧 Deep Work Task 90m", "category": "Uncategorized", "order": 11, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💰 Update Financial Dashboard", "category": "Uncategorized", "order": 12, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🥛 Eat 180g+ Protein", "category": "Uncategorized", "order": 13, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "grams", "target": 180.0, "values": [null]}, {"name": "💧Drink 100oz Water", "category": "Day", "order": 14, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "floz_us", "target": 100.0, "values": [null]}, {"name": "🍽️ Eat <2400 Kcal", "category": "Uncategorized", "order": 15, "completions": [-1], "done": 0, "missed": 0, "logged": 0, "numeric": true, "unit": "kcal", "target": 2400.0, "values": [null]}, {"name": "📊 Freedom Focus", "category": "Uncategorized", "order": 16, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧼 PM Wash Face", "category": "Uncategorized", "order": 17, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🪥 PM Brush Teeth", "category": "Uncategorized", "order": 18, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "🧵 Floss + Retainers", "category": "Uncategorized", "order": 19, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "💊 PM Supplements", "category": "Uncategorized", "order": 20, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📝 Journal: Reflect & Plan", "category": "Uncategorized", "order": 21, "completions": [-1], "done": 0, "missed": 0, "logged": 0}, {"name": "📖 Read for 15min", "category": "Uncategorized", "order": 22, "completions": [-1], "done": 0, "missed": 0, "logged": 0}]};
 (function(){
@@ -330,6 +357,72 @@ const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", 
     const statusClass = diffDays <= 1 ? 'fresh' : diffDays <= 3 ? 'stale' : 'dead';
     const formatted = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     badge.innerHTML = '<span class="dot ' + statusClass + '"></span>Last data sync: ' + formatted;
+  })();
+
+  // Daybreaker protocol domains
+  const DOMAINS = {
+    'Sleep':         '#8B5CF6',
+    'Nutrition':     '#F97316',
+    'Movement':      '#06B6D4',
+    'Prescriptions': '#EC4899',
+    'Aesthetics':    '#D946EF',
+    'Therapies':     '#14B8A6',
+    'Environment':   '#84CC16',
+    'Genetics':      '#F59E0B',
+    'Performance':   '#60A5FA'
+  };
+
+  // Map habit names to domains (partial match on start of name)
+  const HABIT_DOMAIN = {
+    'Sleep':           'Sleep',
+    'Sunlight':        'Environment',
+    'Burn':            'Movement',
+    'AM Supplements':  'Prescriptions',
+    'AM Brush':        'Aesthetics',
+    'Weekly Checkin':  'Movement',
+    'Complete 3':      'Performance',
+    'Process Inbox':   'Performance',
+    'Social Media':    'Performance',
+    'Meditate':        'Therapies',
+    'Ship 1 Code':     'Performance',
+    'Deep Work':       'Performance',
+    'Financial':       'Performance',
+    'Protein':         'Nutrition',
+    'Water':           'Nutrition',
+    'Kcal':            'Nutrition',
+    'Freedom Focus':   'Performance',
+    'PM Wash':         'Aesthetics',
+    'PM Brush':        'Aesthetics',
+    'Floss':           'Aesthetics',
+    'PM Supplements':  'Prescriptions',
+    'Journal':         'Therapies',
+    'Read':            'Performance'
+  };
+
+  function getDomain(habitName) {
+    // Strip leading emoji
+    const clean = habitName.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\s]+/u, '');
+    for (const [key, domain] of Object.entries(HABIT_DOMAIN)) {
+      if (clean.startsWith(key) || clean.includes(key)) return domain;
+    }
+    return null;
+  }
+
+  function getDomainColor(habitName) {
+    const d = getDomain(habitName);
+    return d ? DOMAINS[d] : null;
+  }
+
+  // Render domain legend
+  (function renderDomainLegend() {
+    const leg = document.getElementById('domain-leg');
+    if (!leg) return;
+    Object.entries(DOMAINS).forEach(([name, color]) => {
+      const el = document.createElement('span');
+      el.className = 'dl';
+      el.innerHTML = '<span class="db" style="background:' + color + '"></span>' + name;
+      leg.appendChild(el);
+    });
   })();
 
   function getWeekMonday(dateStr) {
@@ -456,6 +549,10 @@ const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", 
   const tt = document.getElementById('tt');
   function stt(ev, h, di) {
     tt.querySelector('.th').textContent = h.name;
+    const domEl = tt.querySelector('.tt-domain');
+    const dom = getDomain(h.name);
+    if (dom) { domEl.textContent = dom; domEl.style.color = DOMAINS[dom]; domEl.style.display = 'block'; }
+    else { domEl.style.display = 'none'; }
     tt.querySelector('.td').textContent = dates[di];
     const vE = tt.querySelector('.tv'), sE = tt.querySelector('.ts');
     if (h.numeric && h.values && h.values[di] !== null) {
@@ -642,6 +739,8 @@ const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", 
       const row = document.createElement('tr');
       const numTd = document.createElement('td');
       numTd.className = 'row-num';
+      const dc = getDomainColor(h.name);
+      if (dc) numTd.style.borderLeftColor = dc;
       numTd.textContent = rowNum;
       row.appendChild(numTd);
       const nth = document.createElement('th');
@@ -687,6 +786,10 @@ const D = {"dates": ["2026-03-23"], "habits": [{"name": "🛏️ Sleep >7 Hrs", 
           // Tooltip for weekly avg
           inner.addEventListener('mouseenter', e => {
             tt.querySelector('.th').textContent = h.name;
+            const domEl2 = tt.querySelector('.tt-domain');
+            const dom2 = getDomain(h.name);
+            if (dom2) { domEl2.textContent = dom2; domEl2.style.color = DOMAINS[dom2]; domEl2.style.display = 'block'; }
+            else { domEl2.style.display = 'none'; }
             tt.querySelector('.td').textContent = wg.label + ' week';
             const vE = tt.querySelector('.tv'), sE = tt.querySelector('.ts');
             if (wTotal > 0) {
@@ -801,10 +904,23 @@ const BODY = {
     {
       label: 'Week 1',
       date: '2026-03-23',
-      photos: [],
-      weight: null,
-      bodyFat: null,
-      vo2max: null,
+      photos: ['./public/photos/week1/front.jpg', './public/photos/week1/left.jpg', './public/photos/week1/right.jpg'],
+      weight: 202,
+      weightSource: 'Withings Smart Scale',
+      bodyFat: 13.7,
+      bodyFatSource: 'Withings Smart Scale',
+      vo2max: 40,
+      vo2maxSource: 'Apple Watch',
+      hrv: 91,
+      hrvSource: 'Apple Watch',
+      grip: null,
+      gripSource: 'Dynamometer',
+      bpSys: 139,
+      bpDia: 89,
+      bpSource: 'Cuff',
+      pef: 494,
+      fev1: 5.06,
+      spiroSource: 'Spirometer',
     }
   ]
 };
@@ -815,19 +931,25 @@ const BODY = {
   const dotsContainer = document.getElementById('carousel-dots');
   if (!container || !BODY.weeks.length) return;
 
-  const activeWeeks = BODY.weeks.filter(w => w.weight !== null || w.bodyFat !== null || w.vo2max !== null || w.photos.length > 0);
+  const activeWeeks = BODY.weeks.filter(w => w.weight !== null || w.bodyFat !== null || w.vo2max !== null || w.hrv !== null || w.grip !== null || w.pef !== null || w.fev1 !== null || w.photos.length > 0);
   
   if (activeWeeks.length === 0) {
     container.innerHTML = '<div class="week-card">' +
-      '<div class="week-title">Week 1 \u2014 Starting Point</div>' +
+      '<div class="week-title">Week 1 | Starting Point</div>' +
       '<div class="photo-grid">' +
         '<div class="photo-placeholder">Front</div>' +
-        '<div class="photo-placeholder">Side</div>' +
+        '<div class="photo-placeholder">Left</div>' +
+        '<div class="photo-placeholder">Right</div>' +
       '</div>' +
       '<div class="metrics">' +
-        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">Self-reported</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">Self-reported</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">VO2 Max</div><div class="metric-source">Apple Watch</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">Withings Smart Scale</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">Withings Smart Scale</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">VO2 Max Est.</div><div class="metric-source">Apple Watch</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">HRV</div><div class="metric-source">Apple Watch</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Grip Strength</div><div class="metric-source">Dynamometer</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Blood Pressure</div><div class="metric-source">Cuff</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">PEF</div><div class="metric-source">Spirometer</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">FEV1</div><div class="metric-source">Spirometer</div></div><div class="metric-value" style="color:var(--text-muted)">\u2014</div></div>' +
       '</div></div>';
     return;
   }
@@ -841,6 +963,11 @@ const BODY = {
     const weightDelta = (i > 0 && w.weight && week1.weight) ? w.weight - week1.weight : null;
     const bfDelta = (i > 0 && w.bodyFat && week1.bodyFat) ? w.bodyFat - week1.bodyFat : null;
     const vo2Delta = (i > 0 && w.vo2max && week1.vo2max) ? w.vo2max - week1.vo2max : null;
+    const hrvDelta = (i > 0 && w.hrv && week1.hrv) ? w.hrv - week1.hrv : null;
+    const gripDelta = (i > 0 && w.grip && week1.grip) ? w.grip - week1.grip : null;
+    const bpSysDelta = (i > 0 && w.bpSys && week1.bpSys) ? w.bpSys - week1.bpSys : null;
+    const pefDelta = (i > 0 && w.pef && week1.pef) ? w.pef - week1.pef : null;
+    const fev1Delta = (i > 0 && w.fev1 && week1.fev1) ? w.fev1 - week1.fev1 : null;
     
     function deltaHTML(val, unit, invert) {
       if (val === null) return '';
@@ -869,20 +996,55 @@ const BODY = {
     if (w.photos.length > 0) {
       photosHTML = '<div class="photo-grid">' + w.photos.map(p => '<img src="' + p + '" alt="Week ' + (i+1) + ' progress photo" loading="lazy">').join('') + '</div>';
     } else {
-      photosHTML = '<div class="photo-grid"><div class="photo-placeholder">Front</div><div class="photo-placeholder">Side</div></div>';
+      photosHTML = '<div class="photo-grid"><div class="photo-placeholder">Front</div><div class="photo-placeholder">Left</div><div class="photo-placeholder">Right</div></div>';
     }
 
     const weekIdx = BODY.weeks.indexOf(w);
     
-    card.innerHTML = '<div class="week-title">' + w.label + ' \u2014 ' + w.date + '</div>' +
+    card.innerHTML = '<div class="week-title">' + w.label + ' | ' + w.date + '</div>' +
       photosHTML +
       '<div class="metrics">' +
-        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">Self-reported</div></div><div style="display:flex;align-items:baseline">' + (w.weight ? '<span class="metric-value">' + w.weight + '</span><span class="chart-unit"> lbs</span>' + deltaHTML(weightDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('weight', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">Self-reported</div></div><div style="display:flex;align-items:baseline">' + (w.bodyFat ? '<span class="metric-value">' + w.bodyFat + '</span><span class="chart-unit">%</span>' + deltaHTML(bfDelta, '%', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bodyFat', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">VO2 Max</div><div class="metric-source">Apple Watch</div></div><div style="display:flex;align-items:baseline">' + (w.vo2max ? '<span class="metric-value">' + w.vo2max + '</span><span class="chart-unit"> mL/kg/min</span>' + deltaHTML(vo2Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('vo2max', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">' + (w.weightSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.weight ? '<span class="metric-value">' + w.weight + '</span><span class="chart-unit"> lbs</span>' + deltaHTML(weightDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('weight', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">' + (w.bodyFatSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bodyFat ? '<span class="metric-value">' + w.bodyFat + '</span><span class="chart-unit">%</span>' + deltaHTML(bfDelta, '%', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bodyFat', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">VO2 Max Est.</div><div class="metric-source">' + (w.vo2maxSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.vo2max ? '<span class="metric-value">' + w.vo2max + '</span><span class="chart-unit"> mL/kg/min</span>' + deltaHTML(vo2Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('vo2max', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">HRV</div><div class="metric-source">' + (w.hrvSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.hrv ? '<span class="metric-value">' + w.hrv + '</span><span class="chart-unit"> ms</span>' + deltaHTML(hrvDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('hrv', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Grip Strength</div><div class="metric-source">' + (w.gripSource || 'Dynamometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.grip ? '<span class="metric-value">' + w.grip + '</span><span class="chart-unit"> kg</span>' + deltaHTML(gripDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('grip', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">Blood Pressure</div><div class="metric-source">' + (w.bpSource || 'Cuff') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bpSys ? '<span class="metric-value">' + w.bpSys + '/' + w.bpDia + '</span><span class="chart-unit"> mmHg</span>' + deltaHTML(bpSysDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bpSys', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">PEF</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.pef ? '<span class="metric-value">' + w.pef + '</span><span class="chart-unit"> L/m</span>' + deltaHTML(pefDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('pef', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div><div class="metric-label">FEV1</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.fev1 ? '<span class="metric-value">' + w.fev1 + '</span><span class="chart-unit"> L</span>' + deltaHTML(fev1Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('fev1', weekIdx) + '</div></div>' +
       '</div>';
     
     container.appendChild(card);
+  });
+
+  // Arrow navigation
+  const prevBtn = document.getElementById('carousel-prev');
+  const nextBtn = document.getElementById('carousel-next');
+
+  function getCardWidth() {
+    return container.firstElementChild ? container.firstElementChild.offsetWidth + 12 : 0;
+  }
+
+  function getCurrentIdx() {
+    const cw = getCardWidth();
+    return cw > 0 ? Math.round(container.scrollLeft / cw) : 0;
+  }
+
+  function updateArrows() {
+    const idx = getCurrentIdx();
+    const total = container.children.length;
+    prevBtn.disabled = idx <= 0;
+    nextBtn.disabled = idx >= total - 1;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    const cw = getCardWidth();
+    container.scrollBy({ left: -cw, behavior: 'smooth' });
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const cw = getCardWidth();
+    container.scrollBy({ left: cw, behavior: 'smooth' });
   });
 
   if (activeWeeks.length > 1) {
@@ -891,16 +1053,17 @@ const BODY = {
       dot.className = 'dot' + (i === 0 ? ' active' : '');
       dotsContainer.appendChild(dot);
     });
-    
-    container.addEventListener('scroll', () => {
-      const scrollLeft = container.scrollLeft;
-      const cardWidth = container.firstElementChild.offsetWidth + 12;
-      const activeIdx = Math.round(scrollLeft / cardWidth);
-      dotsContainer.querySelectorAll('.dot').forEach((d, i) => {
-        d.classList.toggle('active', i === activeIdx);
-      });
-    });
   }
+
+  container.addEventListener('scroll', () => {
+    const idx = getCurrentIdx();
+    dotsContainer.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+    updateArrows();
+  });
+
+  updateArrows();
 })();
 
 // Render trend charts
@@ -911,7 +1074,12 @@ const BODY = {
   const metrics = [
     { key: 'weight', title: 'Weight', unit: 'lbs', color: 'var(--green)' },
     { key: 'bodyFat', title: 'Body Fat', unit: '%', color: 'var(--yellow)' },
-    { key: 'vo2max', title: 'VO2 Max', unit: 'mL/kg/min', color: '#58a6ff' }
+    { key: 'vo2max', title: 'VO2 Max Est.', unit: 'mL/kg/min', color: '#58a6ff' },
+    { key: 'hrv', title: 'HRV', unit: 'ms', color: '#8B5CF6' },
+    { key: 'grip', title: 'Grip Strength', unit: 'kg', color: '#06B6D4' },
+    { key: 'bpSys', title: 'Blood Pressure (Systolic)', unit: 'mmHg', color: '#EC4899' },
+    { key: 'pef', title: 'PEF (Peak Expiratory Flow)', unit: 'L/m', color: '#F97316' },
+    { key: 'fev1', title: 'FEV1', unit: 'L', color: '#14B8A6' }
   ];
 
   metrics.forEach(m => {
@@ -946,11 +1114,18 @@ const BODY = {
       
       const areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
       
+      // Week marker lines
+      const weekLines = values.map((v, i) => {
+        const x = values.length === 1 ? w/2 : (i / (values.length - 1)) * w;
+        return '<line x1="' + x.toFixed(1) + '" y1="0" x2="' + x.toFixed(1) + '" y2="' + h + '" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>';
+      }).join('');
+
       svgHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
         '<defs><linearGradient id="grad-' + m.key + '" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0%" stop-color="' + m.color + '" stop-opacity="0.2"/>' +
         '<stop offset="100%" stop-color="' + m.color + '" stop-opacity="0"/>' +
         '</linearGradient></defs>' +
+        weekLines +
         '<polygon points="' + areaPoints + '" fill="url(#grad-' + m.key + ')"/>' +
         '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + m.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
         values.map((v, i) => {
@@ -967,8 +1142,86 @@ const BODY = {
         '<span class="chart-unit">' + m.unit + '</span>' +
       '</div>' +
       svgHTML +
-      (values.length >= 2 ? '<div class="chart-labels"><span>' + values[0].date + '</span><span>' + latest.date + '</span></div>' : '');
+      (values.length >= 1 ? '<div class="chart-labels">' + values.map((v, i) => '<span>W' + (i + 1) + '</span>').join('') + '</div>' : '');
     
+    container.appendChild(chart);
+  });
+})();
+</script>
+<div style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
+  <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Personal Bests</h2>
+  <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Strength benchmarks. Updated as PRs are hit.</p>
+</div>
+<div id="pbs-section" style="padding: 8px 16px 32px;"></div>
+<script>
+(function renderPBs() {
+  const pbs = [
+    { title: 'DB Flat Bench (1RM)', unit: 'lbs', color: '#F97316',
+      entries: [{ date: '2026-03-23', value: 120 }] },
+    { title: 'Pull-ups', unit: 'reps', color: '#06B6D4',
+      entries: [{ date: '2026-03-23', value: 14 }] },
+    { title: 'Push-ups (60s)', unit: 'reps', color: '#2EE05A',
+      entries: [{ date: '2026-03-23', value: 37 }] },
+    { title: 'Standing DB Press (each)', unit: 'lbs', color: '#8B5CF6',
+      entries: [{ date: '2026-03-23', value: 70 }] },
+    { title: 'Dips (@ BW)', unit: 'reps', color: '#EC4899',
+      entries: [{ date: '2026-03-23', value: 15 }] },
+  ];
+  const container = document.getElementById('pbs-section');
+  if (!container) return;
+
+  pbs.forEach(pb => {
+    const values = pb.entries.filter(e => e.value !== null);
+    const chart = document.createElement('div');
+    chart.className = 'trend-chart';
+
+    const latest = values[values.length - 1];
+
+    let svgHTML = '';
+    if (values.length >= 2) {
+      const min = Math.min(...values.map(v => v.value));
+      const max = Math.max(...values.map(v => v.value));
+      const range = max - min || 1;
+      const padding = range * 0.1;
+      const w = 300, h = 80;
+
+      const points = values.map((v, i) => {
+        const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
+        const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      });
+
+      const areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
+
+      const weekLines = values.map((v, i) => {
+        const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
+        return '<line x1="' + x.toFixed(1) + '" y1="0" x2="' + x.toFixed(1) + '" y2="' + h + '" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>';
+      }).join('');
+
+      svgHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="grad-pb-' + pb.title.replace(/[^a-z0-9]/gi, '') + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + pb.color + '" stop-opacity="0.2"/>' +
+        '<stop offset="100%" stop-color="' + pb.color + '" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        weekLines +
+        '<polygon points="' + areaPoints + '" fill="url(#grad-pb-' + pb.title.replace(/[^a-z0-9]/gi, '') + ')"/>' +
+        '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + pb.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+        values.map((v, i) => {
+          const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
+          const y = h - ((v.value - (min - padding)) / (range + padding * 2)) * h;
+          return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="' + pb.color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+        }).join('') +
+        '</svg>';
+    }
+
+    chart.innerHTML = '<div class="chart-title">' + pb.title + '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:6px">' +
+        '<span class="chart-value">' + latest.value + '</span>' +
+        '<span class="chart-unit">' + pb.unit + '</span>' +
+      '</div>' +
+      svgHTML +
+      '<div class="chart-labels">' + values.map(v => '<span>' + v.date.slice(5) + '</span>').join('') + '</div>';
+
     container.appendChild(chart);
   });
 })();
