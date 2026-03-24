@@ -1129,7 +1129,10 @@ function renderCompactChart(vals, color, gradId) {
     '<polygon points="' + areaPts + '" fill="url(#' + gradId + ')"/>' +
     '<polyline points="' + polyPts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
     pts.map(function(p) {
-      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+      var labelY = p.y - 8;
+      if (labelY < 10) labelY = p.y + 14;
+      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>' +
+        '<text x="' + p.x.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="var(--text)" font-size="4" font-weight="700" style="font-family:-apple-system,sans-serif" vector-effect="non-scaling-stroke">' + p.val + '</text>';
     }).join('') +
     '</svg>';
 
