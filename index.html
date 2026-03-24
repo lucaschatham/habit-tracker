@@ -918,7 +918,7 @@ const BODY = {
     {
       label: 'Week 1',
       date: '2026-03-23',
-      photos: ['./public/photos/week1/front.jpg', './public/photos/week1/left.jpg', './public/photos/week1/right.jpg'],
+      photos: ['photos/week1/front.jpg', 'photos/week1/left.jpg', 'photos/week1/right.jpg'],
       weight: 202,
       weightSource: 'Withings Smart Scale',
       bodyFat: 13.7,
@@ -1083,6 +1083,44 @@ const BODY = {
   updateArrows();
 })();
 
+// Shared compact chart renderer: newest LEFT, oldest RIGHT
+function renderCompactChart(vals, color, gradId) {
+  var rv = vals.slice().reverse();
+  if (rv.length < 2) return '';
+  var min = Math.min.apply(null, rv.map(function(v){return v.value}));
+  var max = Math.max.apply(null, rv.map(function(v){return v.value}));
+  var range = max - min || 1;
+  var pad = range * 0.1;
+  var sp = 60;
+  var w = sp * (rv.length - 1) + 20;
+  var h = 80;
+
+  var pts = rv.map(function(v, i) {
+    var x = 10 + i * sp;
+    var y = h - ((v.value - (min - pad)) / (range + pad * 2)) * h;
+    return {x: x, y: y};
+  });
+
+  var polyPts = pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
+  var areaPts = polyPts + ' ' + (10 + (rv.length-1)*sp) + ',' + h + ' 10,' + h;
+
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
+    '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.2"/>' +
+    '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<polygon points="' + areaPts + '" fill="url(#' + gradId + ')"/>' +
+    '<polyline points="' + polyPts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    pts.map(function(p) {
+      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5"/>';
+    }).join('') +
+    '</svg>';
+}
+
+function fmtDateLabel(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // Render trend charts
 (function renderTrends() {
   const container = document.getElementById('trends-section');
@@ -1099,45 +1137,6 @@ const BODY = {
     { key: 'pef', title: 'PEF (Peak Expiratory Flow)', unit: 'L/m', color: '#F97316' },
     { key: 'fev1', title: 'FEV1', unit: 'L', color: '#14B8A6' }
   ];
-
-  // Shared compact chart renderer: newest LEFT, oldest RIGHT
-  function renderCompactChart(vals, color, gradId) {
-    // Reverse: newest first (left side)
-    var rv = vals.slice().reverse();
-    if (rv.length < 2) return '';
-    var min = Math.min.apply(null, rv.map(function(v){return v.value}));
-    var max = Math.max.apply(null, rv.map(function(v){return v.value}));
-    var range = max - min || 1;
-    var pad = range * 0.1;
-    var sp = 60; // fixed px spacing between points
-    var w = sp * (rv.length - 1) + 20; // compact width
-    var h = 80;
-
-    var pts = rv.map(function(v, i) {
-      var x = 10 + i * sp;
-      var y = h - ((v.value - (min - pad)) / (range + pad * 2)) * h;
-      return {x: x, y: y};
-    });
-
-    var polyPts = pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
-    var areaPts = polyPts + ' ' + (10 + (rv.length-1)*sp) + ',' + h + ' 10,' + h;
-
-    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
-      '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.2"/>' +
-      '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
-      '</linearGradient></defs>' +
-      '<polygon points="' + areaPts + '" fill="url(#' + gradId + ')"/>' +
-      '<polyline points="' + polyPts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-      pts.map(function(p) {
-        return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="' + color + '" stroke="var(--surface)" stroke-width="1.5"/>';
-      }).join('') +
-      '</svg>';
-  }
-
-  function fmtDateLabel(d) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
 
   metrics.forEach(m => {
     const values = BODY.weeks.map(w => ({ date: w.date, value: w[m.key] })).filter(d => d.value !== null);
