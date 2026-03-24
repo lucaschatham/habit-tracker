@@ -385,14 +385,30 @@
   .how-to-read .how-content strong { color: var(--text); }
 
   @media (max-width: 640px) {
-    .stats-bar { grid-template-columns: repeat(2, 1fr); }
-    .stats-bar .stat-card:last-child { grid-column: 1 / -1; }
+    .stats-bar {
+      display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      gap: 6px; padding: 8px 12px 0; scrollbar-width: none;
+    }
+    .stats-bar::-webkit-scrollbar { display: none; }
+    .stat-card { min-width: 0; flex: 0 0 auto; padding: 8px 12px; }
+    .stat-card .stat-value { font-size: 18px; }
+    .stat-card .stat-label { font-size: 8px; letter-spacing: 0.3px; }
+    .stat-card .stat-note { font-size: 8px; }
     .pinned-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .pinned-card { padding: 8px 8px; }
-    .identity-bar { gap: 10px; padding-top: 12px; }
-    .identity-avatar { width: 40px; height: 40px; font-size: 15px; }
+    .pinned-card { padding: 6px 8px; }
+    .pinned-card .pin-value { font-size: 14px; }
+    .pinned-card .pin-title { font-size: 8px; margin-bottom: 1px; }
+    .pinned-card .pin-detail { font-size: 10px; }
+    .identity-bar { gap: 10px; padding-top: 10px; }
+    .identity-avatar { width: 36px; height: 36px; font-size: 14px; }
     .identity-text h2 { display: none; }
     .identity-text .identity-role { font-size: 12px; font-weight: 600; color: var(--text); }
+    .identity-text .identity-tagline { font-size: 11px; margin-top: 2px; }
+    .color-key { display: none; }
+    .pinned-section { padding: 6px 12px 0; }
+    .pinned-label { font-size: 10px; margin-bottom: 4px; }
+    .how-to-read { margin: 6px 12px 0; }
+    .how-to-read summary { padding: 8px 10px; font-size: 11px; }
   }
 
   @media (max-width: 480px) {
@@ -413,16 +429,10 @@
     .week-card { flex: 0 0 90vw; padding: 16px; }
     .week-card .metric-value { font-size: 20px; }
     .trend-chart .chart-value { font-size: 24px; }
-    .stat-card .stat-value { font-size: 20px; }
-    .stat-card .stat-label { font-size: 9px; }
-    .stat-card { padding: 8px 6px; border-radius: 8px; }
-    .stats-bar { gap: 6px; padding: 8px 12px 0; }
-    .sync-bar { margin: 8px 12px 0; padding: 6px 10px; font-size: 11px; }
-    .identity-bar { padding: 10px 12px 0; }
-    .pinned-section { padding: 8px 12px 0; }
-    .pinned-card .pin-value { font-size: 16px; }
-    .pinned-card .pin-title { font-size: 9px; margin-bottom: 2px; }
-    .how-to-read { margin: 8px 12px 0; }
+    .sync-bar { margin: 6px 12px 0; padding: 5px 10px; font-size: 10px; }
+    .identity-bar { padding: 8px 12px 0; }
+    .identity-avatar { width: 32px; height: 32px; font-size: 12px; border-width: 1px; }
+    .identity-text .identity-tagline { font-size: 10px; }
   }
 </style>
 </head>
@@ -458,9 +468,9 @@
   <div class="pinned-grid" id="pinned-grid"></div>
 </div>
 
-<!-- How to Read This -->
+<!-- How to Read This + Color Key (combined on mobile) -->
 <details class="how-to-read">
-  <summary>How to read this dashboard</summary>
+  <summary>How to read this dashboard &mdash; <span style="color:var(--green)">green</span> = hit, <span style="color:var(--yellow)">yellow</span> = close, <span style="color:var(--red)">red</span> = missed</summary>
   <div class="how-content">
     <p><strong>What you're looking at:</strong> Every row is a daily habit. Every column is a day. <span style="color:var(--green)">Green</span> = completed, <span style="color:var(--yellow)">yellow</span> = close to target, <span style="color:var(--red)">red</span> = missed, gray = no data yet.</p>
     <p><strong>Why 23 habits:</strong> As CEO of a longevity company, Lucas tracks across every domain of the Daybreaker protocol: sleep, nutrition, movement, prescriptions, aesthetics, therapies, environment, and performance. The breadth is intentional.</p>
@@ -468,9 +478,9 @@
     <p><strong>Numeric habits</strong> (sleep hours, protein grams, water oz, calories) show the actual measured value in each cell, not just pass/fail.</p>
   </div>
 </details>
-<div id="habits-section" style="margin-top: 12px;">
+<div id="habits-section" style="margin-top: 8px;">
 <div class="fb" id="fb"></div>
-<div style="padding: 8px 16px 0; font-size: 11px; color: var(--text-muted); letter-spacing: 0.2px;"><span style="color:var(--green)">&#9679;</span> Hit target <span style="color:var(--yellow)">&#9679;</span> Close <span style="color:var(--red)">&#9679;</span> Missed <span style="color:var(--text-muted)">&#9679;</span> No data</div>
+<div class="color-key" style="padding: 8px 16px 0; font-size: 11px; color: var(--text-muted); letter-spacing: 0.2px;"><span style="color:var(--green)">&#9679;</span> Hit target <span style="color:var(--yellow)">&#9679;</span> Close <span style="color:var(--red)">&#9679;</span> Missed <span style="color:var(--text-muted)">&#9679;</span> No data</div>
 <div class="domain-leg" id="domain-leg"></div>
 <div class="hm-wrap" id="hm"></div>
 </div>
@@ -691,6 +701,8 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   const statsBar = document.getElementById('stats-bar');
   const dash = '<div class="stat-value" style="color:var(--text-muted)">&mdash;</div>';
   const dayLabel = dates.length === 1 ? '1 day' : dates.length + ' days';
+  // Hide entire stats bar when no real data (all dashes look broken)
+  if (!hasRealData) { statsBar.style.display = 'none'; }
   statsBar.innerHTML =
     '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(overallPct)+'">'+overallPct+'%</div>' : dash) + '<div class="stat-label">Overall Adherence</div><div class="stat-note">'+dayLabel+'</div></div>' +
     '<div class="stat-card">' + (hasRealData ? '<div class="stat-value" style="color:'+pc(healthPct)+'">'+healthPct+'%</div>' : dash) + '<div class="stat-label">Health Protocols</div><div class="stat-note">'+healthH.length+' habits</div></div>' +
