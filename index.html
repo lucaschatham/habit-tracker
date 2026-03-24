@@ -52,8 +52,8 @@
   .card .l { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
   .fb {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 4px; padding: 6px 16px 8px; max-width: 320px;
+    display: flex; flex-wrap: wrap;
+    gap: 4px; padding: 6px 16px 8px;
   }
   .fb button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
@@ -299,6 +299,99 @@
   font-size: 9px; color: var(--text-muted); margin-top: 4px;
 }
 
+  /* Identity bar */
+  .identity-bar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 16px 0;
+  }
+  .identity-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: var(--text); flex-shrink: 0;
+  }
+  .identity-text h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .identity-text .identity-role { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+  .identity-text .identity-tagline { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; max-width: 480px; }
+
+  /* Enhanced sync bar */
+  .sync-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px 16px; margin: 12px 16px 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .sync-bar .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sync-bar .dot.fresh { background: var(--green); }
+  .sync-bar .dot.stale { background: var(--yellow); }
+  .sync-bar .dot.dead { background: var(--red); }
+  .sync-bar a { color: var(--text-muted); text-decoration: underline; margin-left: auto; cursor: pointer; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; padding: 12px 16px 0;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; text-align: center;
+  }
+  .stat-card .stat-value {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .stat-label {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-top: 2px; line-height: 1.3;
+  }
+  .stat-card .stat-note {
+    font-size: 9px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* Pinned highlights */
+  .pinned-section { padding: 12px 16px 0; }
+  .pinned-label {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;
+  }
+  .pinned-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pinned-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .pinned-card .pin-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .pinned-card .pin-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .pinned-card .pin-detail { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+  .pinned-card .pin-delta { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .pin-delta.positive { color: var(--green); }
+  .pin-delta.negative { color: var(--red); }
+
+  /* How to read this */
+  .how-to-read {
+    margin: 12px 16px 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .how-to-read summary {
+    padding: 10px 14px; font-size: 12px; color: var(--text-muted);
+    cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+  }
+  .how-to-read summary::-webkit-details-marker { display: none; }
+  .how-to-read summary::before { content: '\25B6'; font-size: 8px; transition: transform 0.15s; }
+  .how-to-read[open] summary::before { transform: rotate(90deg); }
+  .how-to-read .how-content {
+    padding: 0 14px 14px; font-size: 12px; color: var(--text-muted); line-height: 1.7;
+  }
+  .how-to-read .how-content p { margin-top: 8px; }
+  .how-to-read .how-content strong { color: var(--text); }
+
+  @media (max-width: 640px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stats-bar .stat-card:last-child { grid-column: 1 / -1; }
+    .pinned-grid { grid-template-columns: 1fr; }
+    .identity-bar { gap: 12px; }
+    .identity-avatar { width: 44px; height: 44px; font-size: 16px; }
+  }
+
   @media (max-width: 480px) {
     .header { padding: 10px 12px; }
     .header h1 { font-size: 16px; }
@@ -307,7 +400,7 @@
     .cards { padding: 12px; gap: 8px; }
     .card { padding: 12px 14px; min-width: 110px; border-radius: 10px; }
     .card .v { font-size: 24px; }
-    .fb { gap: 3px; padding: 4px 12px 6px; max-width: 280px; }
+    .fb { gap: 3px; padding: 4px 12px 6px; }
     .fb button { font-size: 10px; min-height: 28px; padding: 5px 2px; }
     table th.name { max-width: 140px; font-size: 11px; padding-left: 12px; }
     .sq, .num { min-width: 26px; height: 12px; }
@@ -317,6 +410,13 @@
     .week-card { flex: 0 0 90vw; padding: 16px; }
     .week-card .metric-value { font-size: 20px; }
     .trend-chart .chart-value { font-size: 24px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 9px; }
+    .stat-card { padding: 10px 8px; }
+    .sync-bar { margin: 10px 12px 0; padding: 8px 12px; }
+    .identity-bar { padding: 16px 12px 0; }
+    .pinned-section { padding: 10px 12px 0; }
+    .how-to-read { margin: 10px 12px 0; }
   }
 </style>
 </head>
@@ -326,14 +426,43 @@
   <div class="jump-nav">
     <button onclick="document.getElementById('habits-section').scrollIntoView({behavior:'smooth'})">Habits</button>
     <button onclick="document.getElementById('body-section').scrollIntoView({behavior:'smooth'})">Body</button>
+    <button onclick="document.getElementById('pbs-header').scrollIntoView({behavior:'smooth'})">Benchmarks</button>
   </div>
 </div>
-<div class="header-intro">
-  <div class="sub">Public accountability. Raw data from <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a>, synced daily. No edits, no filtering.</div>
-  <div class="sync-badge" id="sync-badge"></div>
+
+<!-- Identity Bar -->
+<div class="identity-bar">
+  <div class="identity-avatar">LC</div>
+  <div class="identity-text">
+    <h2>Lucas Chatham</h2>
+    <div class="identity-role">CEO, Daybreaker Health</div>
+    <div class="identity-tagline">Public accountability dashboard. Raw data from <a href="https://streaksapp.com" style="color:var(--text);text-decoration:underline" target="_blank">Streaks</a>, synced daily. No edits, no filtering.</div>
+  </div>
 </div>
-<div id="habits-section">
-<div class="cards" id="cards"></div>
+
+<!-- Sync Freshness Bar -->
+<div class="sync-bar" id="sync-bar"></div>
+
+<!-- Stats Bar -->
+<div class="stats-bar" id="stats-bar"></div>
+
+<!-- Pinned Highlights -->
+<div class="pinned-section">
+  <div class="pinned-label">Highlights</div>
+  <div class="pinned-grid" id="pinned-grid"></div>
+</div>
+
+<!-- How to Read This -->
+<details class="how-to-read">
+  <summary>How to read this dashboard</summary>
+  <div class="how-content">
+    <p><strong>What you're looking at:</strong> Every row is a daily habit. Every column is a day. <span style="color:var(--green)">Green</span> = completed, <span style="color:var(--yellow)">yellow</span> = close to target, <span style="color:var(--red)">red</span> = missed, gray = no data yet.</p>
+    <p><strong>Why 23 habits:</strong> As CEO of a longevity company, Lucas tracks across every domain of the Daybreaker protocol: sleep, nutrition, movement, prescriptions, aesthetics, therapies, environment, and performance. The breadth is intentional.</p>
+    <p><strong>How data gets here:</strong> The Streaks iOS app syncs via iCloud. A script extracts the backup, generates the dashboard data, and deploys to this page. No manual editing is possible. The "last synced" timestamp above is proof of freshness.</p>
+    <p><strong>Numeric habits</strong> (sleep hours, protein grams, water oz, calories) show the actual measured value in each cell, not just pass/fail.</p>
+  </div>
+</details>
+<div id="habits-section" style="margin-top: 12px;">
 <div class="fb" id="fb"></div>
 <div style="padding: 8px 16px 0; font-size: 11px; color: var(--text-muted); letter-spacing: 0.2px;"><span style="color:var(--green)">&#9679;</span> Hit target <span style="color:var(--yellow)">&#9679;</span> Close <span style="color:var(--red)">&#9679;</span> Missed <span style="color:var(--text-muted)">&#9679;</span> No data</div>
 <div class="domain-leg" id="domain-leg"></div>
@@ -360,17 +489,21 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
 (function(){
   const {habits, dates} = D;
 
-  // Sync badge: show last data date + freshness indicator
-  (function renderSyncBadge() {
-    const badge = document.getElementById('sync-badge');
-    if (!badge || !dates.length) return;
+  // Enhanced sync bar
+  (function renderSyncBar() {
+    const bar = document.getElementById('sync-bar');
+    if (!bar || !dates.length) return;
     const lastDate = dates[dates.length - 1];
     const last = new Date(lastDate + 'T12:00:00');
     const now = new Date();
-    const diffDays = Math.floor((now - last) / 86400000);
-    const statusClass = diffDays <= 1 ? 'fresh' : diffDays <= 3 ? 'stale' : 'dead';
+    const diffHours = (now - last) / 3600000;
+    const statusClass = diffHours <= 26 ? 'fresh' : diffHours <= 72 ? 'stale' : 'dead';
     const formatted = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    badge.innerHTML = '<span class="dot ' + statusClass + '"></span>Last data sync: ' + formatted;
+    bar.innerHTML = '<span class="dot ' + statusClass + '"></span>' +
+      'Last synced: ' + formatted +
+      ' &middot; ' + habits.length + ' habits tracked' +
+      ' &middot; Day ' + dates.length +
+      '<a onclick="document.querySelector(\'.how-to-read\').open=true;document.querySelector(\'.how-to-read\').scrollIntoView({behavior:\'smooth\'})">How this works</a>';
   })();
 
   // Daybreaker protocol domains
@@ -470,13 +603,43 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
     return { recent: r.l>0?r.d/r.l:0, prior: p.l>0?p.d/p.l:0, delta: (r.l>0?r.d/r.l:0)-(p.l>0?p.d/p.l:0) };
   }
 
-  // Stats
-  const pc = p => p >= 70 ? 'var(--green)' : p >= 40 ? 'var(--yellow)' : 'var(--red)';
+  // Color helper
+  const pc = p => p >= 75 ? 'var(--green)' : p >= 50 ? 'var(--yellow)' : 'var(--red)';
 
-  // Days tracked
-  const daysTracked = dates.length;
+  // Domain classification for stats bar
+  const HEALTH_HABITS = ['Sleep', 'Sunlight', 'Strength Train', 'AM Protocols', 'Protein', 'Water', 'Kcal', 'Meditate', 'Walk 10k', 'Zone 2'];
+  const BIZ_HABITS = ['Commit', 'Top Priority', 'Deep Work', 'Outreach', 'Financial', 'Process Inbox', 'Social Media Post'];
 
-  // This week so far (current Mon-today)
+  function isHealthHabit(name) {
+    const clean = name.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\s]+/u, '');
+    return HEALTH_HABITS.some(k => clean.includes(k));
+  }
+  function isBizHabit(name) {
+    const clean = name.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\s]+/u, '');
+    return BIZ_HABITS.some(k => clean.includes(k));
+  }
+
+  // Overall adherence
+  const totalPossible = dates.length * habits.length;
+  let totalDone = 0;
+  habits.forEach(h => h.completions.forEach(c => { if (c === 1) totalDone++; }));
+  const overallPct = totalPossible > 0 ? Math.round(totalDone / totalPossible * 100) : 0;
+
+  // Health adherence
+  const healthH = habits.filter(h => isHealthHabit(h.name));
+  const healthTotal = dates.length * healthH.length;
+  let healthDone = 0;
+  healthH.forEach(h => h.completions.forEach(c => { if (c === 1) healthDone++; }));
+  const healthPct = healthTotal > 0 ? Math.round(healthDone / healthTotal * 100) : 0;
+
+  // Business adherence
+  const bizH = habits.filter(h => isBizHabit(h.name));
+  const bizTotal = dates.length * bizH.length;
+  let bizDone = 0;
+  bizH.forEach(h => h.completions.forEach(c => { if (c === 1) bizDone++; }));
+  const bizPct = bizTotal > 0 ? Math.round(bizDone / bizTotal * 100) : 0;
+
+  // This week (Mon-today)
   const todayIdx = dates.length - 1;
   const todayDate = new Date(dates[todayIdx] + 'T12:00:00');
   const todayDay = todayDate.getDay();
@@ -486,44 +649,55 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   const twDays = todayIdx - thisWeekStart + 1;
   const twTotal = twDays * habits.length;
   for (let i = thisWeekStart; i <= todayIdx; i++) {
-    habits.forEach(h => {
-      if (h.completions[i] === 1) { twD++; }
-    });
+    habits.forEach(h => { if (h.completions[i] === 1) twD++; });
   }
   const thisWeekPct = twTotal > 0 ? Math.round(twD / twTotal * 100) : 0;
 
-  // Last week (previous Mon-Sun)
+  // Last week (compare equivalent partial window)
   const lastWeekEnd = thisWeekStart - 1;
   const lastWeekStart = Math.max(0, lastWeekEnd - 6);
   let lwD = 0;
-  const lwDays = lastWeekEnd >= 0 ? lastWeekEnd - lastWeekStart + 1 : 0;
-  const lwTotal = lwDays * habits.length;
-  if (lastWeekEnd >= 0) {
-    for (let i = lastWeekStart; i <= lastWeekEnd; i++) {
-      habits.forEach(h => {
-        if (h.completions[i] === 1) { lwD++; }
-      });
+  const lwDaysAvail = lastWeekEnd >= 0 ? lastWeekEnd - lastWeekStart + 1 : 0;
+  // If current week < 4 days, compare same # of days from last week
+  const lwDaysToCompare = twDays < 4 ? Math.min(twDays, lwDaysAvail) : lwDaysAvail;
+  const lwCompareStart = lastWeekEnd >= 0 ? lastWeekStart : 0;
+  const lwCompareEnd = lastWeekEnd >= 0 ? lwCompareStart + lwDaysToCompare - 1 : -1;
+  const lwTotal = lwDaysToCompare * habits.length;
+  if (lwCompareEnd >= 0) {
+    for (let i = lwCompareStart; i <= lwCompareEnd; i++) {
+      habits.forEach(h => { if (h.completions[i] === 1) lwD++; });
     }
   }
   const lastWeekPct = lwTotal > 0 ? Math.round(lwD / lwTotal * 100) : 0;
   const trendDelta = thisWeekPct - lastWeekPct;
   const trendStr = (trendDelta >= 0 ? '+' : '') + trendDelta + '%';
-  const trendColor = trendDelta > 0 ? 'var(--green)' : trendDelta < 0 ? 'var(--red)' : 'var(--yellow)';
 
-  document.getElementById('cards').innerHTML =
-    '<div class="card"><div class="v" style="color:var(--text)">'+daysTracked+'</div><div class="l">Days Tracked</div></div>' +
-    '<div class="card"><div class="v" style="color:'+pc(thisWeekPct)+'">'+thisWeekPct+'%</div><div class="l">This Week So Far</div></div>' +
-    '<div class="card"><div class="v" style="color:'+trendColor+'">'+trendStr+'</div><div class="l">Weekly Trend</div></div>';
+  // Day names for partial week annotation
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const twStartDay = new Date(dates[thisWeekStart] + 'T12:00:00');
+  const twEndDay = new Date(dates[todayIdx] + 'T12:00:00');
+  const partialNote = twDays < 4 ? '(' + dayNames[twStartDay.getDay()] + '-' + dayNames[twEndDay.getDay()] + ')' : '';
+
+  // Render stats bar
+  const statsBar = document.getElementById('stats-bar');
+  statsBar.innerHTML =
+    '<div class="stat-card"><div class="stat-value" style="color:'+pc(overallPct)+'">'+overallPct+'%</div><div class="stat-label">Overall Adherence</div><div class="stat-note">'+dates.length+' days</div></div>' +
+    '<div class="stat-card"><div class="stat-value" style="color:'+pc(healthPct)+'">'+healthPct+'%</div><div class="stat-label">Health Protocols</div><div class="stat-note">'+healthH.length+' habits</div></div>' +
+    '<div class="stat-card"><div class="stat-value" style="color:'+pc(bizPct)+'">'+bizPct+'%</div><div class="stat-label">Business Output</div><div class="stat-note">'+bizH.length+' habits</div></div>' +
+    '<div class="stat-card"><div class="stat-value" style="color:'+pc(thisWeekPct)+'">'+thisWeekPct+'%</div><div class="stat-label">This Week</div><div class="stat-note">'+twDays+' day'+(twDays>1?'s':'')+'</div></div>' +
+    '<div class="stat-card"><div class="stat-value" style="color:'+(trendDelta>0?'var(--green)':trendDelta<0?'var(--red)':'var(--text-muted)')+'">'+trendStr+'</div><div class="stat-label">vs Last Week</div>'+(partialNote?'<div class="stat-note">'+partialNote+'</div>':'')+'</div>';
+
+  // Pinned highlights: render after BODY data is available
+  // Expose streak data globally for the deferred pinned render
+  window._pinnedData = { habits, dates, getStreak };
 
   // Performance-based filters
   const fb = document.getElementById('fb');
   let activeFilter = 'all';
 
-
   const shortDesc = {
     all: 'Last 90 days',
     week: 'Last 7 days',
-    weeklyavg: 'YTD by week',
     streaks: 'Longest first',
     improving: 'Trending better',
     struggling: 'Below 50%'
@@ -544,9 +718,8 @@ const D = {"habits": [{"name": "\ud83d\udecf\ufe0f Sleep >7 Hrs", "category": "U
   addFilter('All', 'all');
   addFilter('Week', 'week');
   addFilter('On Fire', 'streaks');
-  addFilter('Trending', 'improving');
-  addFilter('Struggling', 'struggling');
-  addFilter('Wk Avg', 'weeklyavg');
+  addFilter('Trending Up', 'improving');
+  addFilter('Needs Work', 'struggling');
 
   function getCat(h) {
     const n = h.name.toLowerCase();
@@ -1083,6 +1256,70 @@ const BODY = {
   updateArrows();
 })();
 
+// Render pinned highlights (needs BODY data)
+(function renderPinned() {
+  const grid = document.getElementById('pinned-grid');
+  if (!grid || !window._pinnedData) return;
+  const {habits, dates, getStreak} = window._pinnedData;
+
+  // Slot 1: Longest active streak
+  let bestStreak = 0, bestStreakName = '';
+  habits.forEach(h => {
+    const s = getStreak(h.completions);
+    if (s > bestStreak) { bestStreak = s; bestStreakName = h.name; }
+  });
+  const slot1 = bestStreak > 0
+    ? '<div class="pin-value" style="color:var(--green)">' + bestStreak + ' days</div><div class="pin-detail">' + bestStreakName + '</div>'
+    : '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started ' + dates[0] + '</div>';
+
+  // Slot 2: Body composition
+  let slot2 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started</div>';
+  if (typeof BODY !== 'undefined' && BODY.weeks && BODY.weeks.length > 0) {
+    const latest = BODY.weeks[BODY.weeks.length - 1];
+    const first = BODY.weeks[0];
+    if (latest.weight) {
+      const wDelta = BODY.weeks.length > 1 ? latest.weight - first.weight : null;
+      slot2 = '<div class="pin-value">' + latest.weight + ' <span style="font-size:12px;color:var(--text-muted)">lbs</span></div>' +
+        '<div class="pin-detail">' + (latest.bodyFat ? latest.bodyFat + '% body fat' : latest.label || '') + '</div>' +
+        (wDelta !== null ? '<div class="pin-delta ' + (wDelta <= 0 ? 'positive' : 'negative') + '">' + (wDelta > 0 ? '+' : '') + wDelta.toFixed(1) + ' from Week 1</div>' : '');
+    }
+  }
+
+  // Slot 3: Key biomarker trend
+  let slot3 = '<div class="pin-value" style="color:var(--text-muted)">-</div><div class="pin-detail">Tracking started</div>';
+  if (typeof BODY !== 'undefined' && BODY.weeks && BODY.weeks.length >= 2) {
+    const bioKeys = [
+      {key:'vo2max', label:'VO2 Max', unit:'mL/kg/min'},
+      {key:'hrv', label:'HRV', unit:'ms'},
+      {key:'gripR', label:'Grip R', unit:'lbs'},
+      {key:'gripL', label:'Grip L', unit:'lbs'},
+      {key:'pef', label:'PEF', unit:'L/m'},
+      {key:'fev1', label:'FEV1', unit:'L'}
+    ];
+    let bestDelta = -Infinity, bestBio = null;
+    const first = BODY.weeks[0], latest = BODY.weeks[BODY.weeks.length - 1];
+    bioKeys.forEach(b => {
+      if (first[b.key] && latest[b.key]) {
+        const d = latest[b.key] - first[b.key];
+        if (d > 0 && d > bestDelta) { bestDelta = d; bestBio = {label: b.label, unit: b.unit, delta: d, value: latest[b.key]}; }
+      }
+    });
+    if (bestBio) {
+      slot3 = '<div class="pin-value">' + bestBio.value + ' <span style="font-size:12px;color:var(--text-muted)">' + bestBio.unit + '</span></div>' +
+        '<div class="pin-detail">' + bestBio.label + '</div>' +
+        '<div class="pin-delta positive">+' + bestBio.delta.toFixed(1) + ' from baseline</div>';
+    } else {
+      const bCount = bioKeys.filter(b => first[b.key]).length;
+      slot3 = '<div class="pin-value" style="color:var(--text-muted)">' + bCount + '</div><div class="pin-detail">Biomarkers baselined</div>';
+    }
+  }
+
+  grid.innerHTML =
+    '<div class="pinned-card"><div class="pin-title">Longest Active Streak</div>' + slot1 + '</div>' +
+    '<div class="pinned-card"><div class="pin-title">Body Composition</div>' + slot2 + '</div>' +
+    '<div class="pinned-card"><div class="pin-title">Key Biomarker Trend</div>' + slot3 + '</div>';
+})();
+
 // Shared chart renderer: full-width, newest LEFT, oldest RIGHT
 // SVG for line/dots/gradient only. HTML for all text labels.
 function renderCompactChart(vals, color, gradId) {
@@ -1204,7 +1441,7 @@ function fmtDateLabel(d) {
   });
 })();
 </script>
-<div style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
+<div id="pbs-header" style="padding: 24px 16px 8px; border-top: 1px solid var(--border); margin-top: 8px;">
   <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Personal Bests</h2>
   <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Quarterly assessment benchmarks. Tested and tracked over time.</p>
 </div>
