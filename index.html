@@ -210,6 +210,9 @@
 .week-card .photo-grid {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;
 }
+.week-card .photo-grid.four-photos {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
 .week-card .photo-grid img {
   width: 100%; aspect-ratio: 3/4; object-fit: cover;
   border-radius: 8px; background: #13161b;
@@ -1133,6 +1136,25 @@ const BODY = {
       pef: 494,
       fev1: 5.06,
       spiroSource: 'Spirometer',
+    },
+    {
+      label: 'Week 2',
+      date: '2026-03-30',
+      photos: ['photos/week2/front.jpg', 'photos/week2/right.jpg', 'photos/week2/back.jpg', 'photos/week2/left.jpg'],
+      weight: 199.5,
+      weightSource: 'Withings Smart Scale',
+      bodyFat: 12.7,
+      bodyFatSource: 'Withings Smart Scale',
+      vo2max: null,
+      hrv: null,
+      gripR: null,
+      gripL: null,
+      bpSys: 130,
+      bpDia: 80,
+      bpSource: 'Cuff',
+      pef: null,
+      fev1: null,
+      spiroSource: 'Spirometer',
     }
   ]
 };
@@ -1207,7 +1229,8 @@ const BODY = {
 
     let photosHTML = '';
     if (w.photos.length > 0) {
-      photosHTML = '<div class="photo-grid">' + w.photos.map(p => '<img src="' + p + '" alt="Week ' + (i+1) + ' progress photo" loading="lazy">').join('') + '</div>';
+      const gridClass = w.photos.length === 4 ? 'photo-grid four-photos' : 'photo-grid';
+      photosHTML = '<div class="' + gridClass + '">' + w.photos.map(p => '<img src="' + p + '" alt="Week ' + (i+1) + ' progress photo" loading="lazy">').join('') + '</div>';
     } else {
       photosHTML = '<div class="photo-grid"><div class="photo-placeholder">Front</div><div class="photo-placeholder">Left</div><div class="photo-placeholder">Right</div></div>';
     }
