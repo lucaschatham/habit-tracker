@@ -228,8 +228,11 @@
   display: flex; flex-direction: column; gap: 12px;
 }
 .week-card .metric-row {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; flex-direction: column;
   padding: 10px 0; border-top: 1px solid var(--border);
+}
+.week-card .metric-row-inner {
+  display: flex; justify-content: space-between; align-items: center; width: 100%;
 }
 .week-card .metric-label {
   font-size: 11px; color: var(--text-muted); text-transform: uppercase;
@@ -251,6 +254,10 @@
 
 .week-card .sparkline { margin-left: auto; }
 .week-card .sparkline svg { display: block; }
+.week-card .sparkline-full {
+  width: 100%; margin-top: 6px; margin-left: 0;
+}
+.week-card .sparkline-full svg { width: 100%; height: 36px; }
 
 .carousel-nav {
   display: flex; align-items: center; gap: 0; position: relative;
@@ -1166,6 +1173,9 @@ const BODY = {
   if (!container || !BODY.weeks.length) return;
 
   const activeWeeks = BODY.weeks.filter(w => w.weight !== null || w.bodyFat !== null || w.vo2max !== null || w.hrv !== null || w.gripR !== null || w.pef !== null || w.fev1 !== null || w.photos.length > 0);
+
+  // Display latest week first
+  const displayWeeks = [...activeWeeks].reverse();
   
   if (activeWeeks.length === 0) {
     container.innerHTML = '<div class="week-card">' +
@@ -1190,19 +1200,20 @@ const BODY = {
 
   const week1 = BODY.weeks[0];
   
-  activeWeeks.forEach((w, i) => {
+  displayWeeks.forEach((w, i) => {
     const card = document.createElement('div');
     card.className = 'week-card';
-    
-    const weightDelta = (i > 0 && w.weight && week1.weight) ? w.weight - week1.weight : null;
-    const bfDelta = (i > 0 && w.bodyFat && week1.bodyFat) ? w.bodyFat - week1.bodyFat : null;
-    const vo2Delta = (i > 0 && w.vo2max && week1.vo2max) ? w.vo2max - week1.vo2max : null;
-    const hrvDelta = (i > 0 && w.hrv && week1.hrv) ? w.hrv - week1.hrv : null;
-    const gripRDelta = (i > 0 && w.gripR && week1.gripR) ? w.gripR - week1.gripR : null;
-    const gripLDelta = (i > 0 && w.gripL && week1.gripL) ? w.gripL - week1.gripL : null;
-    const bpSysDelta = (i > 0 && w.bpSys && week1.bpSys) ? w.bpSys - week1.bpSys : null;
-    const pefDelta = (i > 0 && w.pef && week1.pef) ? w.pef - week1.pef : null;
-    const fev1Delta = (i > 0 && w.fev1 && week1.fev1) ? w.fev1 - week1.fev1 : null;
+
+    const isWeek1 = (w === week1);
+    const weightDelta = (!isWeek1 && w.weight && week1.weight) ? w.weight - week1.weight : null;
+    const bfDelta = (!isWeek1 && w.bodyFat && week1.bodyFat) ? w.bodyFat - week1.bodyFat : null;
+    const vo2Delta = (!isWeek1 && w.vo2max && week1.vo2max) ? w.vo2max - week1.vo2max : null;
+    const hrvDelta = (!isWeek1 && w.hrv && week1.hrv) ? w.hrv - week1.hrv : null;
+    const gripRDelta = (!isWeek1 && w.gripR && week1.gripR) ? w.gripR - week1.gripR : null;
+    const gripLDelta = (!isWeek1 && w.gripL && week1.gripL) ? w.gripL - week1.gripL : null;
+    const bpSysDelta = (!isWeek1 && w.bpSys && week1.bpSys) ? w.bpSys - week1.bpSys : null;
+    const pefDelta = (!isWeek1 && w.pef && week1.pef) ? w.pef - week1.pef : null;
+    const fev1Delta = (!isWeek1 && w.fev1 && week1.fev1) ? w.fev1 - week1.fev1 : null;
     
     function deltaHTML(val, unit, invert) {
       if (val === null) return '';
@@ -1213,17 +1224,29 @@ const BODY = {
     
     function sparklineSVG(metric, upToIndex) {
       const values = BODY.weeks.slice(0, upToIndex + 1).map(wk => wk[metric]).filter(v => v !== null);
-      if (values.length < 2) return '';
+      if (values.length < 3) return '';
+      const pad = 4;
       const min = Math.min(...values); const max = Math.max(...values);
       const range = max - min || 1;
-      const w = 60; const h = 24;
-      const points = values.map((v, j) => {
-        const x = (j / (values.length - 1)) * w;
-        const y = h - ((v - min) / range) * h;
-        return x + ',' + y;
-      }).join(' ');
-      return '<div class="sparkline"><svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
-        '<polyline points="' + points + '" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      const sw = 280; const sh = 36;
+      const uid = metric + '_' + upToIndex;
+      const coords = values.map((v, j) => {
+        const x = pad + (j / (values.length - 1)) * (sw - pad * 2);
+        const y = pad + (sh - pad * 2) - ((v - min) / range) * (sh - pad * 2);
+        return { x: x, y: y };
+      });
+      const linePoints = coords.map(c => c.x + ',' + c.y).join(' ');
+      const areaPoints = coords[0].x + ',' + (sh) + ' ' + linePoints + ' ' + coords[coords.length - 1].x + ',' + (sh);
+      const dots = coords.map(c => '<circle cx="' + c.x + '" cy="' + c.y + '" r="3" fill="var(--green)" />').join('');
+      return '<div class="sparkline sparkline-full">' +
+        '<svg width="100%" height="' + sh + '" viewBox="0 0 ' + sw + ' ' + sh + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="sg_' + uid + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--green)" stop-opacity="0.25"/>' +
+        '<stop offset="100%" stop-color="var(--green)" stop-opacity="0.02"/>' +
+        '</linearGradient></defs>' +
+        '<polygon points="' + areaPoints + '" fill="url(#sg_' + uid + ')" />' +
+        '<polyline points="' + linePoints + '" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        dots +
         '</svg></div>';
     }
 
@@ -1241,14 +1264,14 @@ const BODY = {
     card.innerHTML = '<div class="week-title"><span class="week-num">' + w.label + '</span><span class="week-date">' + humanDate + '</span></div>' +
       photosHTML +
       '<div class="metrics">' +
-        '<div class="metric-row"><div><div class="metric-label">Weight</div><div class="metric-source">' + (w.weightSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.weight ? '<span class="metric-value">' + w.weight + '</span><span class="chart-unit"> lbs</span>' + deltaHTML(weightDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('weight', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">Body Fat</div><div class="metric-source">' + (w.bodyFatSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bodyFat ? '<span class="metric-value">' + w.bodyFat + '</span><span class="chart-unit">%</span>' + deltaHTML(bfDelta, '%', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bodyFat', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">VO2 Max Est.</div><div class="metric-source">' + (w.vo2maxSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.vo2max ? '<span class="metric-value">' + w.vo2max + '</span><span class="chart-unit"> mL/kg/min</span>' + deltaHTML(vo2Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('vo2max', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">HRV</div><div class="metric-source">' + (w.hrvSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.hrv ? '<span class="metric-value">' + w.hrv + '</span><span class="chart-unit"> ms</span>' + deltaHTML(hrvDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('hrv', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">Grip Strength</div><div class="metric-source">' + (w.gripSource || 'Dynamometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.gripR ? '<span class="metric-value">' + w.gripR + '/' + w.gripL + '</span><span class="chart-unit"> lbs R/L</span>' : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">Blood Pressure</div><div class="metric-source">' + (w.bpSource || 'Cuff') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bpSys ? '<span class="metric-value">' + w.bpSys + '/' + w.bpDia + '</span><span class="chart-unit"> mmHg</span>' + deltaHTML(bpSysDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('bpSys', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">PEF</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.pef ? '<span class="metric-value">' + w.pef + '</span><span class="chart-unit"> L/m</span>' + deltaHTML(pefDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('pef', weekIdx) + '</div></div>' +
-        '<div class="metric-row"><div><div class="metric-label">FEV1</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.fev1 ? '<span class="metric-value">' + w.fev1 + '</span><span class="chart-unit"> L</span>' + deltaHTML(fev1Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + sparklineSVG('fev1', weekIdx) + '</div></div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">Weight</div><div class="metric-source">' + (w.weightSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.weight ? '<span class="metric-value">' + w.weight + '</span><span class="chart-unit"> lbs</span>' + deltaHTML(weightDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('weight', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">Body Fat</div><div class="metric-source">' + (w.bodyFatSource || 'Self-reported') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bodyFat ? '<span class="metric-value">' + w.bodyFat + '</span><span class="chart-unit">%</span>' + deltaHTML(bfDelta, '%', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('bodyFat', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">VO2 Max Est.</div><div class="metric-source">' + (w.vo2maxSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.vo2max ? '<span class="metric-value">' + w.vo2max + '</span><span class="chart-unit"> mL/kg/min</span>' + deltaHTML(vo2Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('vo2max', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">HRV</div><div class="metric-source">' + (w.hrvSource || 'Apple Watch') + '</div></div><div style="display:flex;align-items:baseline">' + (w.hrv ? '<span class="metric-value">' + w.hrv + '</span><span class="chart-unit"> ms</span>' + deltaHTML(hrvDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('hrv', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">Grip Strength</div><div class="metric-source">' + (w.gripSource || 'Dynamometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.gripR ? '<span class="metric-value">' + w.gripR + '/' + w.gripL + '</span><span class="chart-unit"> lbs R/L</span>' : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div></div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">Blood Pressure</div><div class="metric-source">' + (w.bpSource || 'Cuff') + '</div></div><div style="display:flex;align-items:baseline">' + (w.bpSys ? '<span class="metric-value">' + w.bpSys + '/' + w.bpDia + '</span><span class="chart-unit"> mmHg</span>' + deltaHTML(bpSysDelta, '', true) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('bpSys', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">PEF</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.pef ? '<span class="metric-value">' + w.pef + '</span><span class="chart-unit"> L/m</span>' + deltaHTML(pefDelta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('pef', weekIdx) + '</div>' +
+        '<div class="metric-row"><div class="metric-row-inner"><div><div class="metric-label">FEV1</div><div class="metric-source">' + (w.spiroSource || 'Spirometer') + '</div></div><div style="display:flex;align-items:baseline">' + (w.fev1 ? '<span class="metric-value">' + w.fev1 + '</span><span class="chart-unit"> L</span>' + deltaHTML(fev1Delta, '', false) : '<span class="metric-value" style="color:var(--text-muted)">\u2014</span>') + '</div></div>' + sparklineSVG('fev1', weekIdx) + '</div>' +
       '</div>';
     
     container.appendChild(card);
@@ -1284,8 +1307,8 @@ const BODY = {
     container.scrollBy({ left: cw, behavior: 'smooth' });
   });
 
-  if (activeWeeks.length > 1) {
-    activeWeeks.forEach((_, i) => {
+  if (displayWeeks.length > 1) {
+    displayWeeks.forEach((_, i) => {
       const dot = document.createElement('div');
       dot.className = 'dot' + (i === 0 ? ' active' : '');
       dotsContainer.appendChild(dot);
