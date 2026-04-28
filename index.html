@@ -1289,28 +1289,30 @@ const BODY = {
     
     function sparklineSVG(metric, upToIndex) {
       const values = BODY.weeks.slice(0, upToIndex + 1).map(wk => wk[metric]).filter(v => v !== null);
-      if (values.length < 3) return '';
+      if (values.length < 1) return '';
       const pad = 4;
       const min = Math.min(...values); const max = Math.max(...values);
       const range = max - min || 1;
       const sw = 280; const sh = 36;
       const uid = metric + '_' + upToIndex;
       const coords = values.map((v, j) => {
-        const x = pad + (j / (values.length - 1)) * (sw - pad * 2);
+        const x = values.length === 1 ? sw / 2 : pad + (j / (values.length - 1)) * (sw - pad * 2);
         const y = pad + (sh - pad * 2) - ((v - min) / range) * (sh - pad * 2);
         return { x: x, y: y };
       });
       const linePoints = coords.map(c => c.x + ',' + c.y).join(' ');
       const areaPoints = coords[0].x + ',' + (sh) + ' ' + linePoints + ' ' + coords[coords.length - 1].x + ',' + (sh);
       const dots = coords.map(c => '<circle cx="' + c.x + '" cy="' + c.y + '" r="3" fill="var(--green)" />').join('');
+      const line = values.length > 1 ? '<polyline points="' + linePoints + '" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' : '';
+      const area = values.length > 1 ? '<polygon points="' + areaPoints + '" fill="url(#sg_' + uid + ')" />' : '';
       return '<div class="sparkline sparkline-full">' +
         '<svg width="100%" height="' + sh + '" viewBox="0 0 ' + sw + ' ' + sh + '" preserveAspectRatio="none">' +
         '<defs><linearGradient id="sg_' + uid + '" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0%" stop-color="var(--green)" stop-opacity="0.25"/>' +
         '<stop offset="100%" stop-color="var(--green)" stop-opacity="0.02"/>' +
         '</linearGradient></defs>' +
-        '<polygon points="' + areaPoints + '" fill="url(#sg_' + uid + ')" />' +
-        '<polyline points="' + linePoints + '" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        area +
+        line +
         dots +
         '</svg></div>';
     }
