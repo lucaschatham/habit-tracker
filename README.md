@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Progress photos
+
+Before publishing or committing progress photos, run:
+
+```bash
+npm run photos:strip
+```
+
+Progress photos should be stripped of EXIF/GPS metadata by default. Keep source copies in `photos/weekN/` and served copies in `public/photos/weekN/`.
+
 ## Getting Started
 
 First, run the development server:
