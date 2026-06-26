@@ -1,207 +1,329 @@
-import json, re
-from datetime import datetime, timedelta
-from collections import Counter
+#!/usr/bin/env python3
+import json
+import sqlite3
+from collections import Counter, defaultdict
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
-import os
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-BACKUP_PATH = os.path.join(SCRIPT_DIR, "latest.streaks")
-OUTPUT_PATH = os.path.join(SCRIPT_DIR, "streaks-data.json")
 
-START = datetime(2026, 3, 23)
-END = datetime(2026, 4, 9)
-dates = []
-d = START
-while d <= END:
-    dates.append(d.strftime("%Y-%m-%d"))
-    d += timedelta(days=1)
-date_ints = [int(d.replace("-", "")) for d in dates]
-date_int_set = set(date_ints)
-
-with open(BACKUP_PATH) as f:
-    data = json.load(f)
-
-cat_map = {}
-for c in data.get("categories", []):
-    cat_map[c["id"]] = c["t"]
-
-NUMERIC_UNITS = {"grams", "floz_us", "kcal", "hours", "seconds"}
+START = date(2026, 3, 23)
+END = date.today()
 BATCH_THRESHOLD = 3
+NUMERIC_UNITS = {"grams", "floz_us", "kcal", "hours", "seconds"}
 
-def clean_tf_name(tf):
-    if not tf:
-        return "Unknown"
-    m = re.match(r'^(.+?),\s*(\d+:\d+(?::\d+)?|\d+(?:\.\d+)?(?:g|oz|kcal|hours?|hrs?|mins?|seconds?|lbs?))$', tf, re.I)
-    if m:
-        return m.group(1).strip()
-    return tf.strip()
-
-# Regex to match trailing emojis (common emoji unicode ranges)
-EMOJI_RE = re.compile(
-    r'[\U0001F300-\U0001F9FF\U00002702-\U000027B0\U0000FE00-\U0000FE0F\U0000200D\U00002600-\U000026FF]+\s*$'
+SCRIPT_DIR = Path(__file__).resolve().parent
+DB_PATH = (
+    Path.home()
+    / "Library/Group Containers/group.com.streaksapp.streak.today/Streaks-CloudKit.sqlite"
 )
+OUTPUT_PATH = SCRIPT_DIR / "streaks-data.json"
+INDEX_PATH = SCRIPT_DIR / "index.html"
 
-def strip_trailing_emoji(name):
-    """Remove trailing emojis from a name to avoid duplication."""
-    return EMOJI_RE.sub('', name).strip()
 
-def get_icon_emoji(task):
-    """Extract emoji from the 'i' field (format: 'em_EMOJI')."""
-    icon = task.get('i', '')
-    if icon.startswith('em_'):
-        return icon[3:]
-    return ''
+def date_range(start, end):
+    current = start
+    while current <= end:
+        yield current
+        current += timedelta(days=1)
 
-def find_batch_timestamps(log_entries):
-    t5_entries = [e for e in log_entries if e.get("t") == 5]
-    ts_counts = Counter(e.get("ts", "none") for e in t5_entries)
-    return {ts for ts, count in ts_counts.items() if count >= BATCH_THRESHOLD}
 
-habits = []
-app_order = 0
+def db_uri():
+    return f"file:{DB_PATH}?mode=ro&immutable=1"
 
-for task in data["tasks"]:
-    if task.get("st") != "N":
-        continue
 
-    name = task.get("t")
-    if not isinstance(name, str) or not name:
-        name = clean_tf_name(task.get("tf", ""))
+def as_date_int(day):
+    return int(day.strftime("%Y%m%d"))
 
-    # Strip trailing emojis only (names already have leading emojis)
-    name = strip_trailing_emoji(name)
-    # If name has no leading emoji, prepend icon emoji
-    if name and not any(ord(c) > 0x2000 for c in name[:2]):
-        icon = get_icon_emoji(task)
-        if icon:
-            name = icon + ' ' + name
 
-    cat_ids = task.get("cat", [])
-    category = "Uncategorized"
-    for cid in cat_ids:
-        if cid in cat_map:
-            category = cat_map[cid]
+def batch_key(timestamp):
+    if timestamp is None:
+        return None
+    return int(float(timestamp))
+
+
+def is_numeric(task):
+    target = task["target"]
+    unit = task["unit"] or ""
+    return target is not None and target > 0 and unit in NUMERIC_UNITS
+
+
+def value_is_done(value, target, is_negative):
+    if value is None or value <= 0 or target is None:
+        return None
+    if is_negative:
+        return 1 if value <= target else 0
+    return 1 if value >= target else 0
+
+
+def load_tasks(conn):
+    rows = conn.execute(
+        """
+        SELECT
+          t.Z_PK,
+          t.ZTITLE,
+          COALESCE(t.ZSTATUS, '') AS ZSTATUS,
+          COALESCE(t.ZDISPLAYORDER, 0) AS ZDISPLAYORDER,
+          COALESCE(t.ZTYPENAME, '') AS ZTYPENAME,
+          t.ZTYPETARGET,
+          COALESCE(t.ZTYPEUNIT, '') AS ZTYPEUNIT,
+          COALESCE(t.ZISNEGATIVE, 0) AS ZISNEGATIVE,
+          COALESCE(group_concat(c.ZTITLE, '|'), '') AS categories
+        FROM ZTASK t
+        LEFT JOIN Z_4TASKCATEGORIES tc ON tc.Z_4TASKS = t.Z_PK
+        LEFT JOIN ZTASKCATEGORY c ON c.Z_PK = tc.Z_5TASKCATEGORIES
+        WHERE t.ZSTATUS = 'N'
+        GROUP BY t.Z_PK
+        ORDER BY t.ZDISPLAYORDER, t.Z_PK
+        """
+    ).fetchall()
+
+    tasks = []
+    for row in rows:
+        category = row["categories"].split("|", 1)[0] if row["categories"] else ""
+        tasks.append(
+            {
+                "pk": row["Z_PK"],
+                "name": row["ZTITLE"],
+                "category": category or "Uncategorized",
+                "order": int(row["ZDISPLAYORDER"]),
+                "typename": row["ZTYPENAME"] or "",
+                "target": float(row["ZTYPETARGET"])
+                if row["ZTYPETARGET"] is not None
+                else None,
+                "unit": row["ZTYPEUNIT"] or "",
+                "is_negative": bool(row["ZISNEGATIVE"]),
+            }
+        )
+    return tasks
+
+
+def load_entries(conn, start_int, end_int):
+    rows = conn.execute(
+        """
+        SELECT
+          ZTASK,
+          ZENTRYDATE,
+          ZENTRYTYPE,
+          ZPROGRESS,
+          ZPROGRESSTOTAL,
+          ZCREATEDTIMESTAMP,
+          ZUNIQUEID
+        FROM ZTASKLOGENTRY
+        WHERE ZENTRYDATE BETWEEN ? AND ?
+        ORDER BY ZTASK, ZENTRYDATE, ZENTRYTYPE, Z_PK
+        """,
+        (start_int, end_int),
+    ).fetchall()
+
+    entries = defaultdict(list)
+    batch_counts = defaultdict(Counter)
+
+    for row in rows:
+        task_id = row["ZTASK"]
+        entry = {
+            "date": row["ZENTRYDATE"],
+            "type": row["ZENTRYTYPE"],
+            "progress": row["ZPROGRESS"],
+            "total": row["ZPROGRESSTOTAL"],
+            "created": row["ZCREATEDTIMESTAMP"],
+            "unique_id": row["ZUNIQUEID"],
+        }
+        entries[(task_id, row["ZENTRYDATE"])].append(entry)
+        if row["ZENTRYTYPE"] == 5:
+            key = batch_key(row["ZCREATEDTIMESTAMP"])
+            if key is not None:
+                batch_counts[task_id][key] += 1
+
+    batch_keys = {
+        task_id: {
+            key
+            for key, count in counts.items()
+            if count >= BATCH_THRESHOLD
+        }
+        for task_id, counts in batch_counts.items()
+    }
+    return entries, batch_keys
+
+
+def healthkit_value(entries):
+    samples = set()
+    total = 0.0
+    progress = 0.0
+
+    for entry in entries:
+        if entry["type"] != 15:
+            continue
+        sample_total = float(entry["total"] or 0)
+        sample_progress = float(entry["progress"] or 0)
+        sample_key = (
+            entry["created"],
+            round(sample_total, 6),
+            round(sample_progress, 9),
+        )
+        if sample_key in samples:
+            continue
+        samples.add(sample_key)
+        total += sample_total
+        progress += sample_progress
+
+    if not samples:
+        return None, None
+    return total, progress
+
+
+def non_healthkit_value(entries):
+    totals = [
+        float(entry["total"] or 0)
+        for entry in entries
+        if entry["type"] in {1, 6} and float(entry["total"] or 0) > 0
+    ]
+    if not totals:
+        return None
+    return max(totals)
+
+
+def day_status(task, entries, batch_keys):
+    has_manual_done = any(entry["type"] == 1 for entry in entries)
+    has_manual_miss = any(entry["type"] == 2 for entry in entries)
+    has_timer = any(entry["type"] == 6 for entry in entries)
+
+    legit_retro = False
+    for entry in entries:
+        if entry["type"] != 5:
+            continue
+        key = batch_key(entry["created"])
+        if key is not None and key not in batch_keys:
+            legit_retro = True
             break
 
-    target = task.get("tyt")
-    unit = task.get("tyu", "")
-    is_numeric = bool(target and unit in NUMERIC_UNITS)
+    hk_total, hk_progress = healthkit_value(entries)
+    value = hk_total
+    if value is None and is_numeric(task):
+        value = non_healthkit_value(entries)
 
-    if target:
-        try:
-            target = float(target)
-        except (ValueError, TypeError):
-            target = None
-            is_numeric = False
+    if has_manual_done:
+        return 1, value
+    if has_manual_miss:
+        return 0, value
 
-    # typ/typd: Streaks app's own HealthKit total for one day (authoritative)
-    hk_today_val = task.get("typ", 0)
-    hk_today_date = task.get("typd", 0)
-
-    log = task.get("log", [])
-    batch_ts = find_batch_timestamps(log)
-
-    day_entries = {}
-    for entry in log:
-        ed = entry.get("d")
-        if ed and ed in date_int_set:
-            if ed not in day_entries:
-                day_entries[ed] = []
-            day_entries[ed].append(entry)
-
-    completions = []
-    values_list = []
-    done_count = 0
-    missed_count = 0
-    logged_count = 0
-
-    for i, date_int in enumerate(date_ints):
-        entries = day_entries.get(date_int, [])
-
-        if not entries:
-            completions.append(-1)
-            values_list.append(None)
-            continue
-
-        has_manual_done = any(e["t"] == 1 for e in entries)
-        has_manual_miss = any(e["t"] == 2 for e in entries)
-        has_legit_retro = any(
-            e["t"] == 5 and e.get("ts") and e["ts"] not in batch_ts
-            for e in entries
+    if is_numeric(task) and value is not None:
+        progress_done = (
+            None
+            if hk_progress is None
+            else (1 if hk_progress >= 1.0 else 0)
         )
-        has_auto_backfill = any(e["t"] == 4 for e in entries)
-        has_timer = any(e["t"] == 6 for e in entries)
-        hk_entries = [e for e in entries if e["t"] == 15]
+        value_done = value_is_done(value, task["target"], task["is_negative"])
+        if task["is_negative"]:
+            return value_done if value_done is not None else -1, value
+        if progress_done == 1 or value_done == 1:
+            return 1, value
+        if value > 0:
+            return 0, value
+        return -1, value
 
-        if is_numeric and hk_entries:
-            # Use Streaks app's own authoritative total for the day it computed (typ/typd).
-            # For all other days, deduplicate t=15 entries by unique p value.
-            # Streaks writes duplicate t=15 entries (2-3x per item with identical p values
-            # but different IDs). p-value dedup is close but can slightly undercount if
-            # two genuinely different items have the exact same value.
-            if hk_today_val and date_int == hk_today_date:
-                day_total = float(hk_today_val)
+    if legit_retro or has_timer:
+        return 1, value
+
+    return -1, value
+
+
+def build_data():
+    dates = list(date_range(START, END))
+    date_strings = [day.isoformat() for day in dates]
+    date_ints = [as_date_int(day) for day in dates]
+
+    conn = sqlite3.connect(db_uri(), uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        tasks = load_tasks(conn)
+        entries, all_batch_keys = load_entries(conn, date_ints[0], date_ints[-1])
+    finally:
+        conn.close()
+
+    habits = []
+    for task in tasks:
+        completions = []
+        values = []
+        done = 0
+        missed = 0
+
+        task_batch_keys = all_batch_keys.get(task["pk"], set())
+        for date_int in date_ints:
+            day_entries = entries.get((task["pk"], date_int), [])
+            if not day_entries:
+                status, value = -1, None
             else:
-                seen_p = set()
-                deduped_values = []
-                for e in hk_entries:
-                    p = e.get("p", 0)
-                    if p not in seen_p:
-                        seen_p.add(p)
-                        deduped_values.append(p)
-                day_total = sum(deduped_values)
-            values_list.append(round(day_total, 1) if day_total else None)
+                status, value = day_status(task, day_entries, task_batch_keys)
 
-            if has_manual_done:
-                completions.append(1); done_count += 1; logged_count += 1
-            elif has_manual_miss:
-                completions.append(0); missed_count += 1; logged_count += 1
-            elif target and day_total >= target:
-                completions.append(1); done_count += 1; logged_count += 1
-            elif day_total > 0:
-                completions.append(0); missed_count += 1; logged_count += 1
-            else:
-                completions.append(-1)
-        else:
-            values_list.append(None)
-            if has_manual_done:
-                completions.append(1); done_count += 1; logged_count += 1
-            elif has_manual_miss:
-                completions.append(0); missed_count += 1; logged_count += 1
-            elif has_legit_retro:
-                completions.append(1); done_count += 1; logged_count += 1
-            elif has_timer:
-                completions.append(1); done_count += 1; logged_count += 1
-            elif has_auto_backfill:
-                completions.append(-1)
-            else:
-                completions.append(-1)
+            completions.append(status)
+            if status == 1:
+                done += 1
+            elif status == 0:
+                missed += 1
 
-    habit_data = {
-        "name": name,
-        "category": category,
-        "order": app_order,
-        "completions": completions,
-        "done": done_count,
-        "missed": missed_count,
-        "logged": logged_count,
-    }
-    app_order += 1
+            if is_numeric(task):
+                values.append(round(value, 1) if value is not None else None)
 
-    if is_numeric:
-        habit_data["numeric"] = True
-        habit_data["unit"] = unit
-        habit_data["target"] = target
-        habit_data["values"] = values_list
+        habit = {
+            "name": task["name"],
+            "category": task["category"],
+            "order": task["order"],
+            "completions": completions,
+            "done": done,
+            "missed": missed,
+            "logged": done + missed,
+        }
+        if is_numeric(task):
+            habit.update(
+                {
+                    "numeric": True,
+                    "unit": task["unit"],
+                    "target": task["target"],
+                    "values": values,
+                }
+            )
+        habits.append(habit)
 
-    habits.append(habit_data)
+    return {"dates": date_strings, "habits": habits}
 
-output = {"habits": habits, "dates": dates}
 
-with open(OUTPUT_PATH, "w") as f:
-    json.dump(output, f)
+def write_json(data):
+    OUTPUT_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
 
-print(f"Extracted {len(habits)} habits:\n")
-for h in habits:
-    rate = f"{h['done']/h['logged']*100:.0f}%" if h['logged'] > 0 else "N/A"
-    print(f"  {h['name']:<45s} {rate:>5s}")
 
+def inject_index(data):
+    html = INDEX_PATH.read_text(encoding="utf-8")
+    marker = "const D = "
+    start = html.index(marker) + len(marker)
+    end = html.index(";", start)
+    next_html = (
+        html[:start]
+        + json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        + html[end:]
+    )
+    INDEX_PATH.write_text(next_html, encoding="utf-8")
+
+
+def main():
+    data = build_data()
+    write_json(data)
+    inject_index(data)
+
+    print(
+        f"Extracted {len(data['habits'])} habits from SQLite: "
+        f"{data['dates'][0]}..{data['dates'][-1]} ({len(data['dates'])} days)"
+    )
+    for habit in data["habits"]:
+        rate = (
+            f"{habit['done'] / habit['logged'] * 100:.0f}%"
+            if habit["logged"]
+            else "N/A"
+        )
+        print(f"  {habit['name']:<38s} {rate:>5s} logged={habit['logged']}")
+
+
+if __name__ == "__main__":
+    main()

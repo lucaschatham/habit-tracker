@@ -3,21 +3,20 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.lucaschatham.streaks-copy</string>
+    <string>com.lucaschatham.habits-sync</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/HQ/Projects/habits.lucaschatham.com/copy-latest-streaks.sh</string>
+        <string>/Users/HQ/Projects/habits.lucaschatham.com/scripts/daily-sync.sh</string>
     </array>
 
-    <!-- Run at 9:50am daily — 10 min before the Cowork sync task fires at 10:00am -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>9</integer>
+        <integer>10</integer>
         <key>Minute</key>
-        <integer>50</integer>
+        <integer>0</integer>
     </dict>
 
     <key>StandardOutPath</key>
