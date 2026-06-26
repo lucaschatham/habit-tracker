@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lucas Chatham - Habits</title>
+<title>Lucas Chatham — Habits</title>
+<meta name="description" content="A public, daily-updated accountability board of my habits — complete, missed, and excused days across every metric. Newest day first.">
+<link rel="canonical" href="https://habits.lucaschatham.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://habits.lucaschatham.com/">
+<meta property="og:title" content="Lucas Chatham — Habits">
+<meta property="og:description" content="A public, daily-updated accountability board of my habits. Complete, missed, and excused days across every metric.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Lucas Chatham — Habits">
+<meta name="twitter:description" content="A public, daily-updated accountability board of my habits.">
+<meta name="theme-color" content="#1A1C1F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -57,6 +67,7 @@ button{font:inherit}
 .nm{font-size:13.5px;color:var(--silver2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat{flex:0 0 auto;display:flex;align-items:baseline;gap:8px}
 .stat .rt{font-size:14px;font-weight:600;color:var(--silver);font-variant-numeric:tabular-nums}
+.lhead{padding:7px 18px 1px;text-align:right;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gunmetal)}
 .stat .tr{font-size:9px;font-weight:600}
 .stat .tr.up{color:var(--silver2)} .stat .tr.dn{color:var(--steel)}
 .stat .sk{font-size:10px;color:var(--steel);display:inline-flex;align-items:center;gap:4px}
@@ -66,7 +77,8 @@ button{font:inherit}
 .cell,.wmark{aspect-ratio:1;border-radius:2px;background:var(--empty)}
 .wmark{width:15px;height:15px;aspect-ratio:auto;border-radius:3px}
 .wstrip{display:flex;gap:7px}
-.complete{background:var(--done)!important} .missed{background:var(--miss)!important} .excused{background:var(--excused)!important} .incomplete{background:transparent!important}
+.complete{background:var(--done)!important} .missed{background:var(--miss)!important} .excused{background:var(--excused)!important}
+.incomplete{background:rgba(232,232,230,.035)!important;box-shadow:inset 0 0 0 1px rgba(232,232,230,.10)}
 .now{outline:1.5px solid var(--ring);outline-offset:1px}
 .detail{max-height:0;overflow:hidden;transition:max-height .25s ease;font-size:11px;color:var(--steel)}
 .habit.open .detail{max-height:60px}
@@ -140,10 +152,11 @@ button{font:inherit}
     <div class="legend mono">
       <span class="lg"><i class="sw complete"></i>complete</span>
       <span class="lg"><i class="sw missed"></i>missed</span>
-      <span class="lg"><i class="sw excused"></i>excused</span>
-      <span class="lg"><i class="sw today"></i>today</span>
+      <span class="lg" id="lg-excused"><i class="sw excused"></i>excused</span>
+      <span class="lg"><i class="sw today"></i>latest</span>
     </div>
-    <div class="keyax mono">excused = skipped · allowed miss · paused　　◄ newest</div>
+    <div class="keyax mono"><span id="keyax-excused">excused = skipped · allowed miss · paused　　</span>◄ newest</div>
+    <div class="lhead mono" id="lhead"></div>
     <div class="list" id="list"></div>
   </div>
 </div>
@@ -177,7 +190,8 @@ const D = {"dates":["2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03
       raw: completions, values: Array.isArray(h.values) ? h.values.slice() : [], numeric: !!h.numeric,
       unit: h.unit || '', target: h.target, isNegative: !!h.is_negative
     };
-  }).sort(function(a,b){ return a.order - b.order; });
+  }).filter(function(h){ return h.raw.some(function(c){ return c === 0 || c === 1; }); })
+    .sort(function(a,b){ return a.order - b.order; });
 
   function stateFromCode(code){
     if (code === 1) return 'complete';
@@ -238,6 +252,7 @@ const D = {"dates":["2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03
     document.getElementById('hcount').textContent = habits.length;
     document.getElementById('best').textContent = Math.max.apply(null, habits.map(function(h){ return curStreak(win(h)); })) + 'd';
     document.getElementById('winlbl').textContent = WIN === 28 ? '4 wks' : 'full';
+    document.getElementById('lhead').textContent = 'rate (last ' + (WIN === 28 ? '4 wks' : 'full') + ') · current streak';
     var visible = habits.filter(function(h){ return curF === 'all' || (curF === 'fire' && curStreak(win(h)) >= (h.sec === 'Weekly' ? 2 : 3)) || (curF === 'work' && rate(h) < 50); });
     var lastSec = null, idx = 0;
     visible.forEach(function(h){
@@ -272,6 +287,11 @@ const D = {"dates":["2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('.seg button').forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); WIN = +b.dataset.w; render(); }); });
   document.querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); curF = b.dataset.f; render(); }); });
+  var hasExcused = habits.some(function(h){ return h.st.indexOf('excused') !== -1; });
+  if (!hasExcused){
+    var lgEx = document.getElementById('lg-excused'); if (lgEx) lgEx.style.display = 'none';
+    var kxEx = document.getElementById('keyax-excused'); if (kxEx) kxEx.style.display = 'none';
+  }
   window._v5HabitData = { habits: habits, dates: dates, curStreak: curStreak, win: win, rate: rate };
   render();
 })();
