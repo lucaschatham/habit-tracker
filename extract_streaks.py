@@ -155,11 +155,8 @@ def healthkit_value(entries):
             continue
         sample_total = float(entry["total"] or 0)
         sample_progress = float(entry["progress"] or 0)
-        sample_key = (
-            entry["created"],
-            round(sample_total, 6),
-            round(sample_progress, 9),
-        )
+        # Streaks duplicates HealthKit samples with new row IDs/timestamps.
+        sample_key = (round(sample_total, 6), round(sample_progress, 9))
         if sample_key in samples:
             continue
         samples.add(sample_key)
