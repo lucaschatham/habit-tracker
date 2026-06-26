@@ -17,7 +17,7 @@ if [[ "$BRANCH" != "master" ]]; then
   exit 1
 fi
 
-git fetch origin master
+git fetch origin master:refs/remotes/origin/master
 git rebase origin/master
 python3 extract_streaks.py
 
