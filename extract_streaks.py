@@ -49,10 +49,12 @@ def is_numeric(task):
 
 
 def value_is_done(value, target, is_negative):
-    if value is None or value <= 0 or target is None:
+    if value is None or target is None:
         return None
     if is_negative:
         return 1 if value <= target else 0
+    if value <= 0:
+        return None
     return 1 if value >= target else 0
 
 
