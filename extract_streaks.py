@@ -295,16 +295,20 @@ def write_json(data):
 
 
 def inject_index(data):
-    html = INDEX_PATH.read_text(encoding="utf-8")
-    marker = "const D = "
-    start = html.index(marker) + len(marker)
-    end = html.index(";", start)
-    next_html = (
-        html[:start]
+    lines = INDEX_PATH.read_text(encoding="utf-8").splitlines(keepends=True)
+    replacement = (
+        "const D = "
         + json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-        + html[end:]
+        + ";\n"
     )
-    INDEX_PATH.write_text(next_html, encoding="utf-8")
+
+    for index, line in enumerate(lines):
+        if line.lstrip().startswith("const D = "):
+            lines[index] = replacement
+            INDEX_PATH.write_text("".join(lines), encoding="utf-8")
+            return
+
+    raise ValueError("index.html does not contain a const D assignment")
 
 
 def main():
