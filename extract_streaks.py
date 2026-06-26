@@ -29,7 +29,7 @@ def date_range(start, end):
 
 
 def db_uri():
-    return f"file:{DB_PATH}?mode=ro&immutable=1"
+    return f"file:{DB_PATH}?mode=ro"
 
 
 def as_date_int(day):

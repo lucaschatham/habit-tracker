@@ -36,7 +36,7 @@ print(f'{data["dates"][0]}..{data["dates"][-1]}')
 PY
 )"
 
-git add streaks-data.json index.html extract_streaks.py scripts/daily-sync.sh
+git add streaks-data.json index.html
 
 if git diff --cached --quiet; then
   log_line "STATUS=ok SOURCE=sqlite HABITS=$HABITS DATES=$DATES SITE=unchanged NOTE=no_diff"
