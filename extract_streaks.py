@@ -70,6 +70,9 @@ def load_tasks(conn):
           t.ZTYPETARGET,
           COALESCE(t.ZTYPEUNIT, '') AS ZTYPEUNIT,
           COALESCE(t.ZISNEGATIVE, 0) AS ZISNEGATIVE,
+          COALESCE(t.ZDAYSMODE, 0) AS ZDAYSMODE,
+          COALESCE(t.ZDAYSOFWEEK, 127) AS ZDAYSOFWEEK,
+          COALESCE(t.ZDAYSPERWEEK, 0) AS ZDAYSPERWEEK,
           COALESCE(group_concat(c.ZTITLE, '|'), '') AS categories
         FROM ZTASK t
         LEFT JOIN Z_4TASKCATEGORIES tc ON tc.Z_4TASKS = t.Z_PK
@@ -95,6 +98,13 @@ def load_tasks(conn):
                 else None,
                 "unit": row["ZTYPEUNIT"] or "",
                 "is_negative": bool(row["ZISNEGATIVE"]),
+                # Streaks schedule: ZDAYSMODE 0 + all 7 weekdays (127) = daily;
+                # anything else (X-times-per-week, specific weekdays) = weekly cadence.
+                "schedule": (
+                    "daily"
+                    if int(row["ZDAYSMODE"]) == 0 and int(row["ZDAYSOFWEEK"]) == 127
+                    else "weekly"
+                ),
             }
         )
     return tasks
@@ -273,6 +283,7 @@ def build_data():
             "name": task["name"],
             "category": task["category"],
             "order": task["order"],
+            "schedule": task["schedule"],
             "completions": completions,
             "done": done,
             "missed": missed,
