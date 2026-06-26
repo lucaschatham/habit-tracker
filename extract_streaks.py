@@ -274,14 +274,15 @@ def build_data():
             "logged": done + missed,
         }
         if is_numeric(task):
-            habit.update(
-                {
-                    "numeric": True,
-                    "unit": task["unit"],
-                    "target": task["target"],
-                    "values": values,
-                }
-            )
+            numeric_fields = {
+                "numeric": True,
+                "unit": task["unit"],
+                "target": task["target"],
+                "values": values,
+            }
+            if task["is_negative"]:
+                numeric_fields["is_negative"] = True
+            habit.update(numeric_fields)
         habits.append(habit)
 
     return {"dates": date_strings, "habits": habits}
