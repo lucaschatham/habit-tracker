@@ -7,7 +7,8 @@ from pathlib import Path
 
 
 START = date(2026, 3, 23)
-END = date.today()
+# Only publish completed days; today's Streaks/HealthKit totals are still in flux.
+END = date.today() - timedelta(days=1)
 BATCH_THRESHOLD = 3
 NUMERIC_UNITS = {"grams", "floz_us", "kcal", "hours", "seconds"}
 
