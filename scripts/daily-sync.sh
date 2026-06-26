@@ -11,6 +11,12 @@ log_line() {
 
 cd "$PROJECT_DIR"
 
+BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+if [[ "$BRANCH" != "master" ]]; then
+  log_line "STATUS=error SOURCE=sqlite NOTE=wrong_branch BRANCH=${BRANCH:-detached}"
+  exit 1
+fi
+
 git fetch origin master
 git rebase origin/master
 python3 extract_streaks.py
@@ -38,5 +44,5 @@ if git diff --cached --quiet; then
 fi
 
 git commit -m "sync: $(date +%F)"
-git push origin HEAD:master
+git push origin master:master
 log_line "STATUS=ok SOURCE=sqlite HABITS=$HABITS DATES=$DATES SITE=pushed"
