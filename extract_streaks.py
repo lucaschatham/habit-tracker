@@ -203,7 +203,9 @@ def day_status(task, entries, batch_keys):
 
     if has_manual_done:
         return 1, value
-    if is_numeric(task) and task["is_negative"] and value is not None:
+    if is_numeric(task) and task["is_negative"] and hk_total is not None:
+        # Streaks writes type-2 rollover rows for HealthKit limits even when
+        # the final lower-is-better value is within target.
         value_done = value_is_done(value, task["target"], task["is_negative"])
         return value_done if value_done is not None else -1, value
     if has_manual_miss:
@@ -216,6 +218,8 @@ def day_status(task, entries, batch_keys):
             else (1 if hk_progress >= 1.0 else 0)
         )
         value_done = value_is_done(value, task["target"], task["is_negative"])
+        if task["is_negative"]:
+            return value_done if value_done is not None else -1, value
         if progress_done == 1 or value_done == 1:
             return 1, value
         if value > 0:
