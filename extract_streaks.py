@@ -2,15 +2,30 @@
 import json
 import sqlite3
 from collections import Counter, defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 
+SCHEMA_VERSION = 2
 START = date(2026, 3, 23)
-# Publish the full local contiguous window expected by the daily sync.
-END = date.today()
+# Publish finalized days only. Streaks mutates the current day throughout the
+# day as manual entries and HealthKit samples arrive.
+END = date.today() - timedelta(days=1)
 BATCH_THRESHOLD = 3
 NUMERIC_UNITS = {"grams", "floz_us", "kcal", "hours", "seconds"}
+KNOWN_ENTRY_TYPES = {1, 2, 4, 5, 6, 15}
+VALID_STATES = {
+    "complete",
+    "missed",
+    "incomplete",
+    "skipped",
+    "allowed_miss",
+    "paused",
+    "partial_complete",
+    "partial_missed",
+    "unknown",
+}
+EXCUSED_STATES = {"skipped", "allowed_miss", "paused"}
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DB_PATH = (
@@ -26,6 +41,10 @@ def date_range(start, end):
     while current <= end:
         yield current
         current += timedelta(days=1)
+
+
+def finalized_end(today=None):
+    return (today or date.today()) - timedelta(days=1)
 
 
 def db_uri():
@@ -52,10 +71,32 @@ def value_is_done(value, target, is_negative):
     if value is None or target is None:
         return None
     if is_negative:
-        return 1 if value <= target else 0
+        return value <= target
     if value <= 0:
         return None
-    return 1 if value >= target else 0
+    return value >= target
+
+
+def state_to_legacy_code(state):
+    if state == "complete":
+        return 1
+    if state == "missed":
+        return 0
+    if state in EXCUSED_STATES:
+        return 2
+    return -1
+
+
+def iso_from_timestamp(timestamp):
+    return datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+
+
+def source_metadata():
+    stat = DB_PATH.stat()
+    return {
+        "kind": "streaks_sqlite",
+        "db_mtime": iso_from_timestamp(stat.st_mtime),
+    }
 
 
 def load_tasks(conn):
@@ -192,7 +233,10 @@ def non_healthkit_value(entries):
     return max(totals)
 
 
-def day_status(task, entries, batch_keys):
+def day_state(task, entries, batch_keys):
+    unproven_types = sorted(
+        {entry["type"] for entry in entries if entry["type"] not in KNOWN_ENTRY_TYPES}
+    )
     has_manual_done = any(entry["type"] == 1 for entry in entries)
     has_manual_miss = any(entry["type"] == 2 for entry in entries)
     has_timer = any(entry["type"] == 6 for entry in entries)
@@ -211,39 +255,39 @@ def day_status(task, entries, batch_keys):
     if value is None and is_numeric(task):
         value = non_healthkit_value(entries)
 
+    if unproven_types:
+        return "unknown", value, hk_progress, unproven_types
     if has_manual_done:
-        return 1, value
+        return "complete", value, hk_progress, []
     if is_numeric(task) and task["is_negative"] and hk_total is not None:
         # Streaks writes type-2 rollover rows for HealthKit limits even when
         # the final lower-is-better value is within target.
         value_done = value_is_done(value, task["target"], task["is_negative"])
-        return value_done if value_done is not None else -1, value
+        if value_done is None:
+            return "incomplete", value, hk_progress, []
+        return ("complete" if value_done else "missed"), value, hk_progress, []
     if has_manual_miss:
-        return 0, value
+        return "missed", value, hk_progress, []
 
     if is_numeric(task) and value is not None:
-        progress_done = (
-            None
-            if hk_progress is None
-            else (1 if hk_progress >= 1.0 else 0)
-        )
         value_done = value_is_done(value, task["target"], task["is_negative"])
-        if task["is_negative"]:
-            return value_done if value_done is not None else -1, value
-        if progress_done == 1 or value_done == 1:
-            return 1, value
+        if value_done is None:
+            return "incomplete", value, hk_progress, []
+        if value_done:
+            return "complete", value, hk_progress, []
         if value > 0:
-            return 0, value
-        return -1, value
+            return "missed", value, hk_progress, []
+        return "incomplete", value, hk_progress, []
 
     if legit_retro or has_timer:
-        return 1, value
+        return "complete", value, hk_progress, []
 
-    return -1, value
+    return "incomplete", value, hk_progress, []
 
 
-def build_data():
-    dates = list(date_range(START, END))
+def build_data(today=None):
+    end = finalized_end(today)
+    dates = list(date_range(START, end))
     date_strings = [day.isoformat() for day in dates]
     date_ints = [as_date_int(day) for day in dates]
 
@@ -257,51 +301,85 @@ def build_data():
 
     habits = []
     for task in tasks:
+        states = []
         completions = []
         values = []
+        progress_values = []
         done = 0
         missed = 0
+        excused = 0
+        unknown = 0
+        unknown_entry_types = set()
 
         task_batch_keys = all_batch_keys.get(task["pk"], set())
         for date_int in date_ints:
             day_entries = entries.get((task["pk"], date_int), [])
             if not day_entries:
-                status, value = -1, None
+                state, value, progress, unproven_types = "incomplete", None, None, []
             else:
-                status, value = day_status(task, day_entries, task_batch_keys)
+                state, value, progress, unproven_types = day_state(
+                    task, day_entries, task_batch_keys
+                )
 
-            completions.append(status)
-            if status == 1:
+            if state not in VALID_STATES:
+                state = "unknown"
+            states.append(state)
+            completions.append(state_to_legacy_code(state))
+
+            if state == "complete":
                 done += 1
-            elif status == 0:
+            elif state == "missed":
                 missed += 1
+            elif state in EXCUSED_STATES:
+                excused += 1
+            elif state == "unknown":
+                unknown += 1
+                unknown_entry_types.update(unproven_types)
 
             if is_numeric(task):
                 values.append(round(value, 1) if value is not None else None)
+                progress_values.append(
+                    round(progress, 6) if progress is not None else None
+                )
 
         habit = {
             "name": task["name"],
             "category": task["category"],
             "order": task["order"],
             "schedule": task["schedule"],
+            "states": states,
             "completions": completions,
             "done": done,
             "missed": missed,
-            "logged": done + missed,
+            "excused": excused,
+            "unknown": unknown,
+            "logged": done + missed + excused,
         }
+        if unknown_entry_types:
+            habit["unknown_entry_types"] = sorted(unknown_entry_types)
         if is_numeric(task):
             numeric_fields = {
                 "numeric": True,
                 "unit": task["unit"],
                 "target": task["target"],
                 "values": values,
+                "progress": progress_values,
             }
             if task["is_negative"]:
                 numeric_fields["is_negative"] = True
             habit.update(numeric_fields)
         habits.append(habit)
 
-    return {"dates": date_strings, "habits": habits}
+    unknown_count = sum(habit["unknown"] for habit in habits)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "finalized_through": end.isoformat(),
+        "source": source_metadata(),
+        "dates": date_strings,
+        "habits": habits,
+        "unknown_count": unknown_count,
+    }
 
 
 def write_json(data):
@@ -335,7 +413,8 @@ def main():
 
     print(
         f"Extracted {len(data['habits'])} habits from SQLite: "
-        f"{data['dates'][0]}..{data['dates'][-1]} ({len(data['dates'])} days)"
+        f"{data['dates'][0]}..{data['dates'][-1]} ({len(data['dates'])} days), "
+        f"unknown={data['unknown_count']}"
     )
     for habit in data["habits"]:
         rate = (

@@ -14,6 +14,15 @@ A public accountability dashboard at `habits.lucaschatham.com` showing Lucas's d
 
 ## Current State (March 2026)
 
+### Production Source of Truth (July 2026)
+- The production project is `/Users/HQ/Projects/habits.lucaschatham.com`.
+- The copy under `/Users/HQ/Projects/lucaschatham.com/site/habits` is stale/non-production and must not be used for sync or deploy decisions.
+- The public site is a finalized daily ledger, not a live mirror of the Streaks app. Sync output must publish through yesterday only.
+- Current data is schema v2: top-level metadata plus per-habit `states`; legacy numeric `completions` remains only for compatibility.
+- The allowed state vocabulary is `complete`, `missed`, `incomplete`, `skipped`, `allowed_miss`, `paused`, `partial_complete`, `partial_missed`, and `unknown`.
+- `unknown` is a hard stop for publishing. Run `python3 scripts/audit_streaks_entry_types.py` to inspect unproven Streaks entry types before mapping them.
+- Run `python3 scripts/validate_streaks_data.py streaks-data.json` before committing or pushing generated sync data.
+
 ### What exists
 - **Next.js app scaffolded** at `~/Projects/habit-tracker/` (App Router, TypeScript, Tailwind 4)
 - **Supabase project created** (ref: `vptgrjbjikijklrlukdz`, org: `uqbcvmihvbeamqnpysbh`). Linked but NO tables created yet.
