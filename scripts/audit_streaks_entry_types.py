@@ -8,7 +8,7 @@ DEFAULT_DB = (
     Path.home()
     / "Library/Group Containers/group.com.streaksapp.streak.today/Streaks-CloudKit.sqlite"
 )
-KNOWN_TYPES = {1, 2, 4, 5, 6, 15}
+KNOWN_TYPES = {1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15}
 
 
 def date_int(value):

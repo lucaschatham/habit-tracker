@@ -49,6 +49,10 @@ class DayStateTests(unittest.TestCase):
         state, *_ = extract_streaks.day_state(task(), [entry(4)], set())
         self.assertEqual(state, "incomplete")
 
+    def test_skipped_entry_is_skipped(self):
+        state, *_ = extract_streaks.day_state(task(), [entry(3)], set())
+        self.assertEqual(state, "skipped")
+
     def test_non_batch_retro_is_complete(self):
         state, *_ = extract_streaks.day_state(task(), [entry(5, created=123)], set())
         self.assertEqual(state, "complete")
@@ -65,6 +69,32 @@ class DayStateTests(unittest.TestCase):
         )
         self.assertEqual(state, "complete")
         self.assertEqual(value, 1200)
+
+    def test_paused_entry_is_paused(self):
+        state, *_ = extract_streaks.day_state(task(), [entry(7)], set())
+        self.assertEqual(state, "paused")
+
+    def test_allowed_miss_entry_is_allowed_miss(self):
+        state, *_ = extract_streaks.day_state(task(), [entry(13)], set())
+        self.assertEqual(state, "allowed_miss")
+
+    def test_partial_entry_is_partial_missed_without_final_status(self):
+        state, value, *_ = extract_streaks.day_state(
+            task(target=5400, unit="seconds"), [entry(11, total=120)], set()
+        )
+        self.assertEqual(state, "partial_missed")
+        self.assertEqual(value, 120)
+
+    def test_healthkit_auxiliary_type_does_not_decide_state(self):
+        state, value, progress, unknown = extract_streaks.day_state(
+            task(target=2500, unit="kcal", is_negative=True),
+            [entry(9), entry(15, total=2200, progress=0.88)],
+            set(),
+        )
+        self.assertEqual(state, "complete")
+        self.assertEqual(value, 2200)
+        self.assertEqual(progress, 0.88)
+        self.assertEqual(unknown, [])
 
     def test_positive_healthkit_above_target_is_complete(self):
         state, value, progress, *_ = extract_streaks.day_state(
@@ -133,12 +163,12 @@ class DayStateTests(unittest.TestCase):
 
     def test_unproven_entry_type_is_unknown(self):
         state, value, progress, unknown = extract_streaks.day_state(
-            task(), [entry(7)], set()
+            task(), [entry(99)], set()
         )
         self.assertEqual(state, "unknown")
         self.assertIsNone(value)
         self.assertIsNone(progress)
-        self.assertEqual(unknown, [7])
+        self.assertEqual(unknown, [99])
 
     def test_finalized_end_excludes_today(self):
         self.assertEqual(

@@ -13,7 +13,7 @@ START = date(2026, 3, 23)
 END = date.today() - timedelta(days=1)
 BATCH_THRESHOLD = 3
 NUMERIC_UNITS = {"grams", "floz_us", "kcal", "hours", "seconds"}
-KNOWN_ENTRY_TYPES = {1, 2, 4, 5, 6, 15}
+KNOWN_ENTRY_TYPES = {1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15}
 VALID_STATES = {
     "complete",
     "missed",
@@ -226,7 +226,7 @@ def non_healthkit_value(entries):
     totals = [
         float(entry["total"] or 0)
         for entry in entries
-        if entry["type"] in {1, 6} and float(entry["total"] or 0) > 0
+        if entry["type"] in {1, 6, 11} and float(entry["total"] or 0) > 0
     ]
     if not totals:
         return None
@@ -239,6 +239,10 @@ def day_state(task, entries, batch_keys):
     )
     has_manual_done = any(entry["type"] == 1 for entry in entries)
     has_manual_miss = any(entry["type"] == 2 for entry in entries)
+    has_skipped = any(entry["type"] == 3 for entry in entries)
+    has_paused = any(entry["type"] == 7 for entry in entries)
+    has_partial = any(entry["type"] == 11 for entry in entries)
+    has_allowed_miss = any(entry["type"] == 13 for entry in entries)
     has_timer = any(entry["type"] == 6 for entry in entries)
 
     legit_retro = False
@@ -259,6 +263,12 @@ def day_state(task, entries, batch_keys):
         return "unknown", value, hk_progress, unproven_types
     if has_manual_done:
         return "complete", value, hk_progress, []
+    if has_skipped:
+        return "skipped", value, hk_progress, []
+    if has_paused:
+        return "paused", value, hk_progress, []
+    if has_allowed_miss:
+        return "allowed_miss", value, hk_progress, []
     if is_numeric(task) and task["is_negative"] and hk_total is not None:
         # Streaks writes type-2 rollover rows for HealthKit limits even when
         # the final lower-is-better value is within target.
@@ -268,6 +278,10 @@ def day_state(task, entries, batch_keys):
         return ("complete" if value_done else "missed"), value, hk_progress, []
     if has_manual_miss:
         return "missed", value, hk_progress, []
+    if has_timer:
+        return "complete", value, hk_progress, []
+    if has_partial:
+        return "partial_missed", value, hk_progress, []
 
     if is_numeric(task) and value is not None:
         value_done = value_is_done(value, task["target"], task["is_negative"])
@@ -279,7 +293,7 @@ def day_state(task, entries, batch_keys):
             return "missed", value, hk_progress, []
         return "incomplete", value, hk_progress, []
 
-    if legit_retro or has_timer:
+    if legit_retro:
         return "complete", value, hk_progress, []
 
     return "incomplete", value, hk_progress, []
